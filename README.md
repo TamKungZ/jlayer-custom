@@ -49,8 +49,7 @@ and anyone can add his contribution. JLayer is licensed under LGPL (see [LICENSE
 
 ### Do I need JMF to run JLayer player ?
 
-  No, JMF is not required. You just need a JVM JavaSound 1.0 compliant.
-  (i.e. JVM1.3 or higher).
+  No, JMF is not required. You need a Java 17+ runtime with JavaSound 1.0 compliance.
 
 ### How to run the MP3TOWAV converter ?
 
@@ -58,7 +57,7 @@ and anyone can add his contribution. JLayer is licensed under LGPL (see [LICENSE
   java javazoom.jl.converter.jlc -v -p output.wav yourfile.mp3
 ```
 
-  (Note : MP3TOWAV converter should work under jdk1.1.x or higher)
+  (Note: MP3TOWAV converter runs on modern Java runtimes; this project targets Java 17+.)
 
 ### How to run the simple MP3 player ?
 
@@ -72,7 +71,7 @@ and anyone can add his contribution. JLayer is licensed under LGPL (see [LICENSE
   java javazoom.jl.player.jlp -url http://www.aserver.com/remotefile.mp3
 ```
 
-  Note : MP3 simple player only works under JVM that supports JavaSound 1.0 (i.e JDK1.3.x+)
+  Note: MP3 simple player requires a Java 17+ runtime that provides JavaSound 1.0 support.
 
 ### How to run the advanced (threaded) MP3 player ?
 
