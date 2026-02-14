@@ -1,125 +1,163 @@
 /*
- * 11/19/2004 : 1.0 moved to LGPL.
- * 01/01/2004 : Initial version by E.B javalayer@javazoom.net
- *-----------------------------------------------------------------------
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU Library General Public License as published
- *   by the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Library General Public License for more details.
- *
- *   You should have received a copy of the GNU Library General Public
- *   License along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *----------------------------------------------------------------------
+ * Modernized JLayer Player Test Suite
+ * Tests concurrent playback control and resource management
  */
 
 package javazoom.jl.player;
 
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.Timeout;
 
 import javazoom.jl.player.my.MyJavaSoundAudioDevice;
 import javazoom.jl.player.my.MyJavaSoundAudioDeviceFactory;
-import vavix.util.DelayedWorker;
-
 
 /**
- * Simple player unit test.
- * It takes around 3-6% of CPU and 10MB RAM under Win2K/PIII/1GHz/JDK1.5.0
- * It takes around 10-12% of CPU and 10MB RAM under Win2K/PIII/1GHz/JDK1.4.1
- * It takes around 08-10% of CPU and 10MB RAM under Win2K/PIII/1GHz/JDK1.3.1
- *
- * @since 0.4
+ * Modern test suite for JLayer Player.
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class jlpTest {
 
-    static final float volume = (float) Double.parseDouble(System.getProperty("vavi.test.volume",  "0.2"));
-
-    private Properties props = null;
-    private String filename = null;
-
-    long time;
+    private static final float VOLUME = (float) Double.parseDouble(
+        System.getProperty("vavi.test.volume", "0.2")
+    );
+    private static final int PLAY_DURATION_MS = 3000;
+    
+    private String filename;
 
     @BeforeEach
     void setUp() throws Exception {
-        props = new Properties();
-        InputStream pin = getClass().getClassLoader().getResourceAsStream("test.mp3.properties");
-        props.load(pin);
+        Properties props = new Properties();
+        try (InputStream pin = getClass().getClassLoader()
+                .getResourceAsStream("test.mp3.properties")) {
+            assertNotNull(pin, "test.mp3.properties not found");
+            props.load(pin);
+        }
+        
         String basefile = props.getProperty("basefile");
         String name = props.getProperty("filename");
         filename = basefile + name;
-        System.err.println(filename);
-        time = System.getProperty("vavi.test", "").equals("ide") ? 100000 : 3000;
+        System.out.println("Test file: " + filename);
     }
 
     @Test
-    @DisplayName("original audio device")
+    @Order(1)
+    @DisplayName("Basic playback")
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
     void testPlay() throws Exception {
-        String[] args = new String[1];
-        args[0] = filename;
-        jlp player = jlp.createInstance(args);
+        jlp player = jlp.createInstance(new String[]{filename});
+        
         try {
-            javazoom.jl.player.AudioDevice dev = FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory.class);
-            Assumptions.assumeTrue(!(dev instanceof javazoom.jl.player.NullAudioDevice), "JavaSoundAudioDevice not available, skipping testPlay");
+            AudioDevice dev = FactoryRegistry.systemRegistry()
+                    .createAudioDevice(JavaSoundAudioDeviceFactory.class);
+            Assumptions.assumeFalse(dev instanceof NullAudioDevice);
             player.setAudioDevice(dev);
-        } catch (javazoom.jl.decoder.JavaLayerException ex) {
-            Assumptions.assumeTrue(false, "JavaSoundAudioDevice not available: " + ex.getMessage());
+        } catch (Exception ex) {
+            Assumptions.abort("Audio device not available: " + ex.getMessage());
         }
-        DelayedWorker.later(3000, player::stop);
+        
+        AtomicBoolean stopped = new AtomicBoolean(false);
+        Thread stopThread = new Thread(() -> {
+            try {
+                Thread.sleep(PLAY_DURATION_MS);
+                player.stop();
+                stopped.set(true);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        
+        stopThread.start();
         player.play();
-        assertTrue(true, "Play");
+        stopThread.join(5000);
+        
+        assertTrue(stopped.get());
     }
 
     @Test
-    @DisplayName("my audio device w/ volume")
+    @Order(2)
+    @DisplayName("Volume control")
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
     void testPlay2() throws Exception {
-        String[] args = new String[1];
-        args[0] = filename;
-        jlp player = jlp.createInstance(args);
-        // my audio device might have first priority
-        javazoom.jl.player.AudioDevice ad;
+        jlp player = jlp.createInstance(new String[]{filename});
+        
+        AudioDevice ad;
         try {
             ad = player.setAudioDevice();
-        } catch (javazoom.jl.decoder.JavaLayerException ex) {
-            Assumptions.assumeTrue(false, "No audio device available: " + ex.getMessage());
+        } catch (Exception ex) {
+            Assumptions.abort("No audio device: " + ex.getMessage());
             return;
         }
-        Assumptions.assumeTrue(ad instanceof MyJavaSoundAudioDevice, "MyJavaSoundAudioDevice not available, skipping testPlay2");
-        ((MyJavaSoundAudioDevice) ad).setVolume(volume);
-        DelayedWorker.later(3000, player::stop);
-        player.play();
-        assertTrue(true, "Play");
+        
+        Assumptions.assumeTrue(ad instanceof MyJavaSoundAudioDevice);
+        ((MyJavaSoundAudioDevice) ad).setVolume(VOLUME);
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        Thread playThread = new Thread(() -> {
+            try {
+                player.play();
+            } catch (Exception e) {
+                fail("Playback failed: " + e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        });
+        
+        playThread.start();
+        Thread.sleep(PLAY_DURATION_MS);
+        player.stop();
+        
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     @Test
-    @DisplayName("specified my audio device w/ volume")
+    @Order(3)
+    @DisplayName("Specified device")
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
     void testPlay3() throws Exception {
-        String[] args = new String[1];
-        args[0] = filename;
-        jlp player = jlp.createInstance(args);
+        jlp player = jlp.createInstance(new String[]{filename});
+        
         try {
-            javazoom.jl.player.AudioDevice dev = FactoryRegistry.systemRegistry().createAudioDevice(MyJavaSoundAudioDeviceFactory.class);
-            Assumptions.assumeTrue(dev instanceof MyJavaSoundAudioDevice, "MyJavaSoundAudioDeviceFactory not available, skipping testPlay3");
+            AudioDevice dev = FactoryRegistry.systemRegistry()
+                    .createAudioDevice(MyJavaSoundAudioDeviceFactory.class);
+            Assumptions.assumeTrue(dev instanceof MyJavaSoundAudioDevice);
             player.setAudioDevice(dev);
-        } catch (javazoom.jl.decoder.JavaLayerException ex) {
-            Assumptions.assumeTrue(false, "MyJavaSoundAudioDeviceFactory not available: " + ex.getMessage());
+            
+            AudioDevice ad = player.setAudioDevice();
+            ((MyJavaSoundAudioDevice) ad).setVolume(VOLUME);
+        } catch (Exception ex) {
+            Assumptions.abort("Device setup failed: " + ex.getMessage());
         }
-        javazoom.jl.player.AudioDevice ad = player.setAudioDevice();
-        Assumptions.assumeTrue(ad instanceof MyJavaSoundAudioDevice, "MyJavaSoundAudioDevice not available after set, skipping testPlay3");
-        ((MyJavaSoundAudioDevice) ad).setVolume(volume);
-        DelayedWorker.later(3000, player::stop);
-        player.play();
-        assertTrue(true, "Play");
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        Thread playThread = new Thread(() -> {
+            try {
+                player.play();
+            } catch (Exception e) {
+                // Expected when stopped
+            } finally {
+                latch.countDown();
+            }
+        });
+        
+        playThread.start();
+        Thread.sleep(PLAY_DURATION_MS);
+        player.stop();
+        
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 }

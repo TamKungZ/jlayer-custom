@@ -1,21 +1,6 @@
 /*
- * 11/19/2004 : 1.0 moved to LGPL.
- * 01/01/2004 : Initial version by E.B javalayer@javazoom.net
- *-----------------------------------------------------------------------
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU Library General Public License as published
- *   by the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Library General Public License for more details.
- *
- *   You should have received a copy of the GNU Library General Public
- *   License along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *----------------------------------------------------------------------
+ * Modern Bitstream Test Suite
+ * Tests MP3 frame parsing and bitstream operations
  */
 
 package javazoom.jl.decoder;
@@ -23,92 +8,167 @@ package javazoom.jl.decoder;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import vavi.util.Debug;
-
-
 /**
- * Bitstream unit test.
- * It matches test.mp3 properties to test.mp3.properties expected results.
- * As we don't ship test.mp3, you have to generate your own test.mp3.properties
- * Uncomment out = System.out; in setUp() method to generated it on stdout from
- * your own MP3 file.
- *
- * @since 0.4
+ * Tests Bitstream functionality with actual MP3 files.
  */
-public class BitstreamTest {
+class BitstreamTest {
 
-    private String basefile = null;
-    private String name = null;
-    private String filename = null;
-    private Properties props = null;
-    private FileInputStream mp3in = null;
-    private Bitstream in = null;
+    private String filename;
+    private FileInputStream mp3in;
+    private Bitstream bitstream;
 
     @BeforeEach
-    protected void setUp() throws Exception {
-        props = new Properties();
-        InputStream pin = getClass().getClassLoader().getResourceAsStream("test.mp3.properties");
-        props.load(pin);
-        basefile = props.getProperty("basefile");
-        name = props.getProperty("filename");
+    void setUp() throws Exception {
+        Properties props = new Properties();
+        try (InputStream pin = getClass().getClassLoader()
+                .getResourceAsStream("test.mp3.properties")) {
+            assertNotNull(pin, "test.mp3.properties not found");
+            props.load(pin);
+        }
+        
+        String basefile = props.getProperty("basefile");
+        String name = props.getProperty("filename");
         filename = basefile + name;
+        
         mp3in = new FileInputStream(filename);
-        in = new Bitstream(mp3in);
+        bitstream = new Bitstream(mp3in);
     }
 
     @AfterEach
-    protected void tearDown() throws Exception {
-        in.close();
-        mp3in.close();
+    void tearDown() throws Exception {
+        if (bitstream != null && !bitstream.isClosed()) {
+            bitstream.close();
+        }
+        if (mp3in != null) {
+            mp3in.close();
+        }
     }
 
     @Test
-    public void testStream() throws Exception {
-        InputStream id3in = in.getRawID3v2();
-        int size = (id3in == null) ? 0 : id3in.available();
-        Header header = in.readFrame();
-        Debug.println(Level.FINE, "--- " + filename + " ---");
-        Debug.println(Level.FINE, "ID3v2Size=" + size);
-        Debug.println(Level.FINE, "version=" + header.version());
-        Debug.println(Level.FINE, "version_string=" + header.versionString());
-        Debug.println(Level.FINE, "layer=" + header.layer());
-        Debug.println(Level.FINE, "frequency=" + header.frequency());
-        Debug.println(Level.FINE, "frequency_string=" + header.sampleFrequencyString());
-        Debug.println(Level.FINE, "bitrate=" + header.bitrate());
-        Debug.println(Level.FINE, "bitrate_string=" + header.bitrateString());
-        Debug.println(Level.FINE, "mode=" + header.mode());
-        Debug.println(Level.FINE, "mode_string=" + header.modeString());
-        Debug.println(Level.FINE, "slots=" + header.slots());
-        Debug.println(Level.FINE, "vbr=" + header.vbr());
-        Debug.println(Level.FINE, "vbr_scale=" + header.vbrScale());
-        Debug.println(Level.FINE, "max_number_of_frames=" + header.maxNumberOfFrames(mp3in.available()));
-        Debug.println(Level.FINE, "min_number_of_frames=" + header.minNumberOfFrames(mp3in.available()));
-        Debug.println(Level.FINE, "ms_per_frame=" + header.msPerFrame());
-        Debug.println(Level.FINE, "frames_per_second=" + (float) ((1.0 / (header.msPerFrame())) * 1000.0));
-        Debug.println(Level.FINE, "total_ms=" + header.totalMs(mp3in.available()));
-        Debug.println(Level.FINE, "SyncHeader=" + header.getSyncHeader());
-        Debug.println(Level.FINE, "checksums=" + header.checksums());
-        Debug.println(Level.FINE, "copyright=" + header.copyright());
-        Debug.println(Level.FINE, "original=" + header.original());
-        Debug.println(Level.FINE, "padding=" + header.padding());
-        Debug.println(Level.FINE, "framesize=" + header.calculateFrameSize());
-        Debug.println(Level.FINE, "number_of_subbands=" + header.numberOfSubbands());
-        // Relaxed assertions: ensure header successfully parsed and no exceptions.
-        org.junit.jupiter.api.Assertions.assertNotNull(header, "Header should not be null");
-        org.junit.jupiter.api.Assertions.assertTrue(header.calculateFrameSize() >= 0, "framesize");
-        // Basic sanity checks (relaxed to support different test files)
-        org.junit.jupiter.api.Assertions.assertTrue(header.msPerFrame() > 0.0f, "ms_per_frame");
-        org.junit.jupiter.api.Assertions.assertTrue((float) ((1.0 / (header.msPerFrame())) * 1000.0) > 0.0f,
-            "frames_per_second");
-        org.junit.jupiter.api.Assertions.assertTrue(header.totalMs(mp3in.available()) >= 0.0f, "total_ms");
-        org.junit.jupiter.api.Assertions.assertTrue(header.calculateFrameSize() >= 0, "framesize");
-        org.junit.jupiter.api.Assertions.assertTrue(header.numberOfSubbands() >= 0, "number_of_subbands");
-        in.closeFrame();
+    @DisplayName("Parse MP3 header and validate properties")
+    void testHeaderParsing() throws Exception {
+        // Read ID3v2 tag if present
+        InputStream id3in = bitstream.getRawID3v2();
+        int id3Size = (id3in == null) ? 0 : id3in.available();
+        
+        // Read first frame header
+        Header header = bitstream.readFrame();
+        assertNotNull(header, "Header should not be null");
+        
+        // Validate header properties
+        assertTrue(header.calculateFrameSize() >= 0, "Frame size should be non-negative");
+        assertTrue(header.msPerFrame() > 0.0f, "ms per frame should be positive");
+        assertTrue(header.frequency() > 0, "Frequency should be positive");
+        assertTrue(header.numberOfSubbands() >= 0, "Subbands should be non-negative");
+        
+        // Validate bitrate and mode
+        assertNotNull(header.bitrateString(), "Bitrate string should not be null");
+        assertNotNull(header.modeString(), "Mode string should not be null");
+        assertNotNull(header.versionString(), "Version string should not be null");
+        
+        // Calculate stream properties
+        float framesPerSecond = (float) (1000.0 / header.msPerFrame());
+        assertTrue(framesPerSecond > 0.0f, "Frames per second should be positive");
+        
+        float totalMs = header.totalMs(mp3in.available());
+        assertTrue(totalMs >= 0.0f, "Total duration should be non-negative");
+        
+        System.out.println("=== MP3 File Properties ===");
+        System.out.println("File: " + filename);
+        System.out.println("ID3v2 size: " + id3Size + " bytes");
+        System.out.println("Version: " + header.versionString());
+        System.out.println("Layer: " + header.layer());
+        System.out.println("Bitrate: " + header.bitrateString());
+        System.out.println("Sample rate: " + header.sampleFrequencyString());
+        System.out.println("Mode: " + header.modeString());
+        System.out.println("Frame size: " + header.calculateFrameSize() + " bytes");
+        System.out.println("Duration: " + String.format("%.2f", totalMs / 1000.0) + " seconds");
+        
+        bitstream.closeFrame();
+    }
+
+    @Test
+    @DisplayName("Read multiple frames sequentially")
+    void testMultipleFrames() throws Exception {
+        int frameCount = 0;
+        int maxFrames = 10;
+        
+        while (frameCount < maxFrames && !bitstream.isEOF()) {
+            Header header = bitstream.readFrame();
+            if (header == null) {
+                break;
+            }
+            
+            assertNotNull(header, "Header should not be null");
+            assertTrue(header.calculateFrameSize() > 0, 
+                    "Frame " + frameCount + " should have valid size");
+            
+            bitstream.closeFrame();
+            frameCount++;
+        }
+        
+        assertTrue(frameCount > 0, "Should read at least one frame");
+        System.out.println("Successfully read " + frameCount + " frames");
+    }
+
+    @Test
+    @DisplayName("Bitstream state management")
+    void testBitstreamState() throws Exception {
+        assertFalse(bitstream.isClosed(), "Bitstream should not be closed initially");
+        assertFalse(bitstream.isEOF(), "Should not be at EOF initially");
+        
+        // Read a frame
+        Header header = bitstream.readFrame();
+        assertNotNull(header);
+        bitstream.closeFrame();
+        
+        assertFalse(bitstream.isClosed(), "Bitstream should still be open");
+        
+        // Close and verify
+        bitstream.close();
+        assertTrue(bitstream.isClosed(), "Bitstream should be closed");
+        
+        // Closing again should be safe (idempotent)
+        assertDoesNotThrow(() -> bitstream.close(), 
+                "Multiple close calls should not throw");
+    }
+
+    @Test
+    @DisplayName("Handle EOF gracefully")
+    void testEOFHandling() throws Exception {
+        // Read until EOF
+        int frameCount = 0;
+        while (!bitstream.isEOF()) {
+            Header header = bitstream.readFrame();
+            if (header == null) {
+                break;
+            }
+            bitstream.closeFrame();
+            frameCount++;
+            
+            // Safety limit
+            if (frameCount > 10000) {
+                fail("Too many frames, possible infinite loop");
+            }
+        }
+        
+        assertTrue(frameCount > 0, "Should have read some frames");
+        System.out.println("Total frames read: " + frameCount);
+        
+        // After EOF, readFrame should return null
+        Header header = bitstream.readFrame();
+        assertNull(header, "readFrame should return null at EOF");
     }
 }
