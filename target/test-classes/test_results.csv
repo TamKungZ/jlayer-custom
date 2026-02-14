@@ -1,0 +1,5 @@
+Filename,Original_Info,CBR_Size_MB,VBR_Size_MB,Savings_Percent
+c-major-scale _test_ableton-live.wav,"44.1kHz, Stereo, 16bit",0.20,0.12,40.0%
+c-major-scale _test_audacity.mp3,"48.0kHz, Stereo, 0bit",0.20,0.09,53.5%
+c-major-scale _test_web-convert_mono.mp3,"48.0kHz, Mono, 0bit",0.20,0.05,75.3%
+test.mp3,"44.1kHz, Stereo, 0bit",14.22,11.57,18.7%
