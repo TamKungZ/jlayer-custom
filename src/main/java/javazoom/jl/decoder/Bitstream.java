@@ -129,6 +129,7 @@ public final class Bitstream implements BitstreamErrors {
     private byte[] rawid3v2 = null;
 
     private boolean firstframe = true;
+    private boolean eof = false;
 
     /**
      * Construct a IBitstream that reads data from a
@@ -443,21 +444,11 @@ public final class Bitstream implements BitstreamErrors {
         int bytesize = frameSize;
 
         // Check ID3v1 TAG (True only if last frame).
-
-        for (int k = 0; k < bytesize; k = k + 4) {
-            @SuppressWarnings("unused")
-            int convert = 0;
-            byte b0 = 0;
-            byte b1 = 0;
-            byte b2 = 0;
-            byte b3 = 0;
-            b0 = byteread[k];
-            if (k + 1 < bytesize)
-                b1 = byteread[k + 1];
-            if (k + 2 < bytesize)
-                b2 = byteread[k + 2];
-            if (k + 3 < bytesize)
-                b3 = byteread[k + 3];
+        for (int k = 0; k < bytesize; k += 4) {
+            byte b0 = byteread[k];
+            byte b1 = (k + 1 < bytesize) ? byteread[k + 1] : 0;
+            byte b2 = (k + 2 < bytesize) ? byteread[k + 2] : 0;
+            byte b3 = (k + 3 < bytesize) ? byteread[k + 3] : 0;
             frameBuffer[b++] = ((b0 << 24) & 0xFF000000) | ((b1 << 16) & 0x00FF0000) | ((b2 << 8) & 0x0000FF00)
                     | (b3 & 0x000000FF);
         }
@@ -474,25 +465,47 @@ public final class Bitstream implements BitstreamErrors {
         int returnvalue = 0;
         int sum = bitindex + number_of_bits;
 
-        // E.B
-        // There is a problem here, wordPointer could be -1 ?!
+        if (number_of_bits <= 0)
+            return 0;
+
+        // Ensure wordPointer is in a sane range
         if (wordPointer < 0)
             wordPointer = 0;
-        // E.B : End.
+
+        // Determine how many words are valid based on frameSize (bytes -> ints)
+        int maxWords = (frameSize <= 0) ? 0 : ((frameSize + 3) / 4);
 
         if (sum <= 32) {
             // all bits contained in *wordPointer
-            returnvalue = (frameBuffer[wordPointer] >>> (32 - sum)) & bitmask[number_of_bits];
+            if (wordPointer >= maxWords)
+                return 0; // prevent ArrayIndexOutOfBounds
+
+            int w = frameBuffer[wordPointer];
+            returnvalue = (w >>> (32 - sum)) & bitmask[number_of_bits];
             if ((bitindex += number_of_bits) == 32) {
                 bitindex = 0;
-                wordPointer++; // added by me!
+                wordPointer++;
+
+                // Safety check after increment to prevent future access violations
+                if (wordPointer >= maxWords) {
+                    wordPointer = maxWords - 1;
+                    bitindex = 0;
+                }
             }
             return returnvalue;
         }
 
+        // need bits from two words
+        if (wordPointer >= maxWords)
+            return 0;
+
         int Right = (frameBuffer[wordPointer] & 0x0000FFFF);
         wordPointer++;
-        int Left = (frameBuffer[wordPointer] & 0xFFFF0000);
+
+        int Left = 0;
+        if (wordPointer < maxWords)
+            Left = (frameBuffer[wordPointer] & 0xFFFF0000);
+
         returnvalue = ((Right << 16) & 0xFFFF0000) | ((Left >>> 16) & 0x0000FFFF);
 
         returnvalue >>>= 48 - sum;
@@ -528,6 +541,7 @@ public final class Bitstream implements BitstreamErrors {
             while (len > 0) {
                 int bytesread = source.read(b, offs, len);
                 if (bytesread == -1) {
+                    eof = true;
                     while (len-- > 0) {
                         b[offs++] = 0;
                     }
@@ -554,6 +568,7 @@ public final class Bitstream implements BitstreamErrors {
             while (len > 0) {
                 int bytesread = source.read(b, offs, len);
                 if (bytesread == -1) {
+                    eof = true;
                     break;
                 }
                 totalBytesRead += bytesread;
@@ -564,5 +579,30 @@ public final class Bitstream implements BitstreamErrors {
             throw newBitstreamException(STREAM_ERROR, ex);
         }
         return totalBytesRead;
+    }
+
+    /**
+     * Convenience: return a copy of the raw frame bytes read by the last readFrameData().
+     * Returns null if no frame bytes are available.
+     */
+    public byte[] getFrameBytes() {
+        if (frameSize <= 0) return null;
+        byte[] out = new byte[frameSize];
+        System.arraycopy(frameBytes, 0, out, 0, frameSize);
+        return out;
+    }
+
+    /**
+     * Convenience: returns number of bytes in the current frame (from last readFrameData()).
+     */
+    public int getFrameSize() {
+        return frameSize;
+    }
+
+    /**
+     * Convenience: indicates whether end-of-stream has been reached while reading.
+     */
+    public boolean isEOF() {
+        return eof;
     }
 }

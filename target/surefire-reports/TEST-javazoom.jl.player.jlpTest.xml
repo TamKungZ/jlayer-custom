@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="javazoom.jl.player.jlpTest" time="9.556" tests="3" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="javazoom.jl.player.jlpTest" time="9.58" tests="3" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -17,7 +17,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Amazon Corretto\jdk21.0.7_6\bin"/>
-    <property name="sun.java.command" value="C:\Users\USRE\AppData\Local\Temp\surefire8548183752366029551\surefirebooter-20260215004856357_3.jar C:\Users\USRE\AppData\Local\Temp\surefire8548183752366029551 2569-02-15T00-48-55_491-jvmRun1 surefire-20260215004856357_1tmp surefire_0-20260215004856357_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\USRE\AppData\Local\Temp\surefire15173805270339789745\surefirebooter-20260215014648354_3.jar C:\Users\USRE\AppData\Local\Temp\surefire15173805270339789745 2569-02-15T01-46-48_203-jvmRun1 surefire-20260215014648354_1tmp surefire_0-20260215014648354_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes;g:\Projects\Code\Java\jlayer-custom\target\classes;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-api\6.0.1\junit-jupiter-api-6.0.1.jar;C:\Users\USRE\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\USRE\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\USRE\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-engine\6.0.1\junit-jupiter-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-engine\6.0.1\junit-platform-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-commons\6.0.1\junit-platform-commons-6.0.1.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-instrumentation\1.1.16\vavi-instrumentation-1.1.16.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -32,7 +32,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\USRE\AppData\Local\Temp\surefire8548183752366029551\surefirebooter-20260215004856357_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\USRE\AppData\Local\Temp\surefire15173805270339789745\surefirebooter-20260215014648354_3.jar"/>
     <property name="user.script" value=""/>
     <property name="java.util.logging.config.file" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes/logging.properties"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
@@ -63,22 +63,22 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="testPlay2" classname="javazoom.jl.player.jlpTest" time="3.304">
-    <system-out><![CDATA[playing src/test/resources/test.mp3...
+  <testcase name="testPlay2" classname="javazoom.jl.player.jlpTest" time="3.323">
+    <system-out><![CDATA[playing src/test/resources/c-major-scale _test_audacity.mp3...
 ]]></system-out>
-    <system-err><![CDATA[src/test/resources/test.mp3
+    <system-err><![CDATA[src/test/resources/c-major-scale _test_audacity.mp3
 ]]></system-err>
   </testcase>
-  <testcase name="testPlay3" classname="javazoom.jl.player.jlpTest" time="3.042">
-    <system-out><![CDATA[playing src/test/resources/test.mp3...
+  <testcase name="testPlay3" classname="javazoom.jl.player.jlpTest" time="3.057">
+    <system-out><![CDATA[playing src/test/resources/c-major-scale _test_audacity.mp3...
 ]]></system-out>
-    <system-err><![CDATA[src/test/resources/test.mp3
+    <system-err><![CDATA[src/test/resources/c-major-scale _test_audacity.mp3
 ]]></system-err>
   </testcase>
-  <testcase name="testPlay" classname="javazoom.jl.player.jlpTest" time="3.207">
-    <system-out><![CDATA[playing src/test/resources/test.mp3...
+  <testcase name="testPlay" classname="javazoom.jl.player.jlpTest" time="3.197">
+    <system-out><![CDATA[playing src/test/resources/c-major-scale _test_audacity.mp3...
 ]]></system-out>
-    <system-err><![CDATA[src/test/resources/test.mp3
+    <system-err><![CDATA[src/test/resources/c-major-scale _test_audacity.mp3
 ]]></system-err>
   </testcase>
 </testsuite>
