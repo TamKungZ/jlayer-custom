@@ -66,7 +66,7 @@ dependencies {
 }
 ```
 
-### Maven
+### Maven (via JitPack)
 ```xml
 <repositories>
     <repository>
@@ -78,7 +78,7 @@ dependencies {
 <dependency>
     <groupId>com.github.tamkungz</groupId>
     <artifactId>jlayer-custom</artifactId>
-    <version>v1.0.2</version>
+    <version>1.0.2.1</version>
 </dependency>
 ```
 
@@ -208,3 +208,4 @@ See `javazoom.jl.player.advanced.jlap` source to learn how to skip frames.
 [http://www.javazoom.net/services/forums/index.jsp](https://web.archive.org/web/20041010053627/http://www.javazoom.net/services/forums/index.jsp)
 
 </details>
+
