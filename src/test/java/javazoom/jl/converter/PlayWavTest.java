@@ -18,6 +18,11 @@ public class PlayWavTest {
         Assumptions.assumeTrue(wav.exists(), "Test WAV file not present, skipping playback test");
 
         try (AudioInputStream ais = AudioSystem.getAudioInputStream(wav)) {
+            // ensure system supports playing this audio format
+            javax.sound.sampled.AudioFormat fmt = ais.getFormat();
+            javax.sound.sampled.DataLine.Info info = new javax.sound.sampled.DataLine.Info(Clip.class, fmt);
+            Assumptions.assumeTrue(AudioSystem.isLineSupported(info), "No Clip supporting WAV format available, skipping playback test");
+
             Clip clip = AudioSystem.getClip();
             clip.open(ais);
             clip.start();

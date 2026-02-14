@@ -23,14 +23,15 @@ package javazoom.jl.player;
 import java.io.InputStream;
 import java.util.Properties;
 
-import javazoom.jl.player.my.MyJavaSoundAudioDevice;
-import javazoom.jl.player.my.MyJavaSoundAudioDeviceFactory;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import vavix.util.DelayedWorker;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javazoom.jl.player.my.MyJavaSoundAudioDevice;
+import javazoom.jl.player.my.MyJavaSoundAudioDeviceFactory;
+import vavix.util.DelayedWorker;
 
 
 /**
@@ -68,7 +69,13 @@ class jlpTest {
         String[] args = new String[1];
         args[0] = filename;
         jlp player = jlp.createInstance(args);
-        player.setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory.class));
+        try {
+            javazoom.jl.player.AudioDevice dev = FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory.class);
+            Assumptions.assumeTrue(!(dev instanceof javazoom.jl.player.NullAudioDevice), "JavaSoundAudioDevice not available, skipping testPlay");
+            player.setAudioDevice(dev);
+        } catch (javazoom.jl.decoder.JavaLayerException ex) {
+            Assumptions.assumeTrue(false, "JavaSoundAudioDevice not available: " + ex.getMessage());
+        }
         DelayedWorker.later(3000, player::stop);
         player.play();
         assertTrue(true, "Play");
@@ -81,7 +88,15 @@ class jlpTest {
         args[0] = filename;
         jlp player = jlp.createInstance(args);
         // my audio device might have first priority
-        ((MyJavaSoundAudioDevice) player.setAudioDevice()).setVolume(volume);
+        javazoom.jl.player.AudioDevice ad;
+        try {
+            ad = player.setAudioDevice();
+        } catch (javazoom.jl.decoder.JavaLayerException ex) {
+            Assumptions.assumeTrue(false, "No audio device available: " + ex.getMessage());
+            return;
+        }
+        Assumptions.assumeTrue(ad instanceof MyJavaSoundAudioDevice, "MyJavaSoundAudioDevice not available, skipping testPlay2");
+        ((MyJavaSoundAudioDevice) ad).setVolume(volume);
         DelayedWorker.later(3000, player::stop);
         player.play();
         assertTrue(true, "Play");
@@ -93,8 +108,16 @@ class jlpTest {
         String[] args = new String[1];
         args[0] = filename;
         jlp player = jlp.createInstance(args);
-        player.setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(MyJavaSoundAudioDeviceFactory.class));
-        ((MyJavaSoundAudioDevice) player.setAudioDevice()).setVolume(volume);
+        try {
+            javazoom.jl.player.AudioDevice dev = FactoryRegistry.systemRegistry().createAudioDevice(MyJavaSoundAudioDeviceFactory.class);
+            Assumptions.assumeTrue(dev instanceof MyJavaSoundAudioDevice, "MyJavaSoundAudioDeviceFactory not available, skipping testPlay3");
+            player.setAudioDevice(dev);
+        } catch (javazoom.jl.decoder.JavaLayerException ex) {
+            Assumptions.assumeTrue(false, "MyJavaSoundAudioDeviceFactory not available: " + ex.getMessage());
+        }
+        javazoom.jl.player.AudioDevice ad = player.setAudioDevice();
+        Assumptions.assumeTrue(ad instanceof MyJavaSoundAudioDevice, "MyJavaSoundAudioDevice not available after set, skipping testPlay3");
+        ((MyJavaSoundAudioDevice) ad).setVolume(volume);
         DelayedWorker.later(3000, player::stop);
         player.play();
         assertTrue(true, "Play");
