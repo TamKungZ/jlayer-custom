@@ -8,29 +8,32 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java: [17, 21]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          distribution: temurin
           cache: maven
 
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
+      - name: Build + Run Unit Tests
+        run: mvn -B clean test
 
-      - name: Run tests
-        run: mvn -B test --file pom.xml
+      - name: Package JAR
+        run: mvn -B package -DskipTests
 
-      - name: Upload JAR
+      - name: Upload Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: jlayer-rhythm
+          name: jlayer-custom-${{ matrix.java }}
           path: target/*.jar
-          retention-days: 7
