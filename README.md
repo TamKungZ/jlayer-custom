@@ -209,19 +209,3 @@ See `javazoom.jl.player.advanced.jlap` source to learn how to skip frames.
 [http://www.javazoom.net/services/forums/index.jsp](https://web.archive.org/web/20041010053627/http://www.javazoom.net/services/forums/index.jsp)
 
 </details>
-
-=======
-
-See `javazoom.jl.player.advanced.jlap` source to learn how to skip frames.
-
-## Project Homepage
-
-[http://www.javazoom.net/javalayer/javalayer.html](https://web.archive.org/web/20210108055829/http://www.javazoom.net/javalayer/javalayer.html) 
-
-## JAVA and MP3 online Forums
-
-[http://www.javazoom.net/services/forums/index.jsp](https://web.archive.org/web/20041010053627/http://www.javazoom.net/services/forums/index.jsp)
-
-</details>
->>>>>>> 4793c9f226e4f6eb77d1dcad89f9487c2fd620ee
-
