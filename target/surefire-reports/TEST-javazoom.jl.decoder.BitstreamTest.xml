@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="javazoom.jl.decoder.BitstreamTest" time="0.015" tests="1" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="javazoom.jl.decoder.BitstreamTest" time="0.022" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
     <property name="sun.jnu.encoding" value="MS874"/>
     <property name="vavi.test.volume" value="0.02"/>
-    <property name="java.class.path" value="G:\Projects\Code\Java\jlayer-custom\target\test-classes;G:\Projects\Code\Java\jlayer-custom\target\classes;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-api\6.0.1\junit-jupiter-api-6.0.1.jar;C:\Users\USRE\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\USRE\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\USRE\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-engine\6.0.1\junit-jupiter-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-engine\6.0.1\junit-platform-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-commons\6.0.1\junit-platform-commons-6.0.1.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-instrumentation\1.1.16\vavi-instrumentation-1.1.16.jar;"/>
+    <property name="java.class.path" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes;g:\Projects\Code\Java\jlayer-custom\target\classes;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-api\6.0.1\junit-jupiter-api-6.0.1.jar;C:\Users\USRE\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\USRE\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\USRE\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-engine\6.0.1\junit-jupiter-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-engine\6.0.1\junit-platform-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-commons\6.0.1\junit-platform-commons-6.0.1.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-instrumentation\1.1.16\vavi-instrumentation-1.1.16.jar;"/>
     <property name="java.vm.vendor" value="Amazon.com Inc."/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="user.variant" value=""/>
@@ -17,9 +17,9 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Amazon Corretto\jdk21.0.7_6\bin"/>
-    <property name="sun.java.command" value="C:\Users\USRE\AppData\Local\Temp\surefire13841969502016991039\surefirebooter-20260215025822617_3.jar C:\Users\USRE\AppData\Local\Temp\surefire13841969502016991039 2569-02-15T02-58-22_470-jvmRun1 surefire-20260215025822617_1tmp surefire_0-20260215025822617_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\USRE\AppData\Local\Temp\surefire6942249140415006694\surefirebooter-20260215030656293_3.jar C:\Users\USRE\AppData\Local\Temp\surefire6942249140415006694 2569-02-15T03-06-55_921-jvmRun1 surefire-20260215030656293_1tmp surefire_0-20260215030656293_2tmp"/>
     <property name="jdk.debug" value="release"/>
-    <property name="surefire.test.class.path" value="G:\Projects\Code\Java\jlayer-custom\target\test-classes;G:\Projects\Code\Java\jlayer-custom\target\classes;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-api\6.0.1\junit-jupiter-api-6.0.1.jar;C:\Users\USRE\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\USRE\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\USRE\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-engine\6.0.1\junit-jupiter-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-engine\6.0.1\junit-platform-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-commons\6.0.1\junit-platform-commons-6.0.1.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-instrumentation\1.1.16\vavi-instrumentation-1.1.16.jar;"/>
+    <property name="surefire.test.class.path" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes;g:\Projects\Code\Java\jlayer-custom\target\classes;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-api\6.0.1\junit-jupiter-api-6.0.1.jar;C:\Users\USRE\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\USRE\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\USRE\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-engine\6.0.1\junit-jupiter-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-engine\6.0.1\junit-platform-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-commons\6.0.1\junit-platform-commons-6.0.1.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-instrumentation\1.1.16\vavi-instrumentation-1.1.16.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
     <property name="user.home" value="C:\Users\USRE"/>
     <property name="user.language" value="en"/>
@@ -27,14 +27,14 @@
     <property name="java.version.date" value="2025-04-15"/>
     <property name="java.home" value="C:\Program Files\Amazon Corretto\jdk21.0.7_6"/>
     <property name="file.separator" value="\"/>
-    <property name="basedir" value="G:\Projects\Code\Java\jlayer-custom"/>
+    <property name="basedir" value="g:\Projects\Code\Java\jlayer-custom"/>
     <property name="java.vm.compressedOopsMode" value="Zero based"/>
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\USRE\AppData\Local\Temp\surefire13841969502016991039\surefirebooter-20260215025822617_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\USRE\AppData\Local\Temp\surefire6942249140415006694\surefirebooter-20260215030656293_3.jar"/>
     <property name="user.script" value=""/>
-    <property name="java.util.logging.config.file" value="G:\Projects\Code\Java\jlayer-custom\target\test-classes/logging.properties"/>
+    <property name="java.util.logging.config.file" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes/logging.properties"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="21.0.7+6-LTS"/>
     <property name="user.name" value="USRE"/>
@@ -49,7 +49,7 @@
     <property name="java.vendor.url.bug" value="https://github.com/corretto/corretto-21/issues/"/>
     <property name="java.io.tmpdir" value="C:\Users\USRE\AppData\Local\Temp\"/>
     <property name="java.version" value="21.0.7"/>
-    <property name="user.dir" value="G:\Projects\Code\Java\jlayer-custom"/>
+    <property name="user.dir" value="g:\Projects\Code\Java\jlayer-custom"/>
     <property name="os.arch" value="amd64"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
     <property name="user.language.format" value="th"/>
@@ -63,5 +63,5 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="testStream" classname="javazoom.jl.decoder.BitstreamTest" time="0.014"/>
+  <testcase name="testStream" classname="javazoom.jl.decoder.BitstreamTest" time="0.022"/>
 </testsuite>

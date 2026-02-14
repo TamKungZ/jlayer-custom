@@ -3,6 +3,7 @@
 [![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/tamkungz/jlayer-rhythm)
 [![Status](https://img.shields.io/badge/Status-Stable-success)](https://github.com/tamkungz/jlayer-rhythm)
 [![License](https://img.shields.io/badge/License-LGPL-blue)](LICENSE.txt)
+[![JitPack](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
 
 <img alt="mp3 logo" src="https://github.com/umjammer/mp3spi/assets/493908/b718b78d-15c6-4356-a5ca-fca63ad7ffcb" width=160 />
 
