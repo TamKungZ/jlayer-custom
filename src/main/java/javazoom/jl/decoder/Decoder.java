@@ -100,7 +100,7 @@ public class Decoder implements DecoderErrors {
     private int outputFrequency;
     private int outputChannels;
 
-    private Equalizer equalizer = new Equalizer();
+    private final Equalizer equalizer = new Equalizer();
 
     private Params params;
 
@@ -149,7 +149,11 @@ public class Decoder implements DecoderErrors {
      * @return a new Params instance with default values
      */
     public static Params getDefaultParams() {
-        return (Params) DEFAULT_PARAMS.clone();
+        try {
+            return (Params) DEFAULT_PARAMS.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError("Params clone failed: " + e);
+        }
     }
     
     /**
@@ -703,7 +707,7 @@ public class Decoder implements DecoderErrors {
         }
 
         @Override
-        public Object clone() {
+        public Object clone() throws CloneNotSupportedException {
             try {
                 Params cloned = (Params) super.clone();
                 // Deep clone the equalizer
@@ -768,7 +772,7 @@ public class Decoder implements DecoderErrors {
      * @since 2.0
      */
     public static class DecoderBuilder {
-        private Params params = new Params();
+        private final Params params = new Params();
         private Obuffer outputBuffer;
         private DecodeEventListener eventListener;
         

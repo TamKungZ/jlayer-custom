@@ -115,7 +115,7 @@ public final class Bitstream implements BitstreamErrors, AutoCloseable {
     /**
      * CRC calculator array.
      */
-    private Crc16[] crc = new Crc16[1];
+    private final Crc16[] crc = new Crc16[1];
 
     /**
      * Raw ID3v2 tag data.
@@ -714,7 +714,7 @@ public final class Bitstream implements BitstreamErrors, AutoCloseable {
      * Read bytes without throwing exception on EOF.
      */
     private int readBytes(byte[] b, int offs, int len) throws BitstreamException {
-        int totalBytesRead = 0;
+        int bytesReadLocal = 0;
         try {
             while (len > 0) {
                 int bytesread = source.read(b, offs, len);
@@ -722,14 +722,14 @@ public final class Bitstream implements BitstreamErrors, AutoCloseable {
                     eof = true;
                     break;
                 }
-                totalBytesRead += bytesread;
+                bytesReadLocal += bytesread;
                 offs += bytesread;
                 len -= bytesread;
             }
         } catch (IOException ex) {
             throw newBitstreamException(STREAM_ERROR, ex);
         }
-        return totalBytesRead;
+        return bytesReadLocal;
     }
 
     /**

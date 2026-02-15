@@ -49,6 +49,8 @@ public final class Equalizer {
     private static final int BANDS = 32;
 
     private final float[] settings = new float[BANDS];
+    private transient float[] cachedFactors;
+    private transient boolean factorsDirty = true;
 
     /**
      * Creates a new <code>Equalizer</code> instance.
@@ -71,6 +73,7 @@ public final class Equalizer {
         for (int i = 0; i < max; i++) {
             settings[i] = limit(eq[i]);
         }
+        factorsDirty = true;
     }
 
     public void setFrom(EQFunction eq) {
@@ -80,6 +83,7 @@ public final class Equalizer {
         for (int i = 0; i < max; i++) {
             settings[i] = limit(eq.getBand(i));
         }
+        factorsDirty = true;
     }
 
     /**
@@ -97,6 +101,7 @@ public final class Equalizer {
      */
     public void reset() {
         Arrays.fill(settings, 0.0f);
+        factorsDirty = true;
     }
 
     /**
@@ -112,6 +117,7 @@ public final class Equalizer {
         if ((band >= 0) && (band < BANDS)) {
             eq = settings[band];
             settings[band] = limit(neweq);
+            factorsDirty = true;
         }
 
         return eq;
@@ -148,12 +154,20 @@ public final class Equalizer {
      * subbands.
      */
     float[] getBandFactors() {
-        float[] factors = new float[BANDS];
-        for (int i = 0, maxCount = BANDS; i < maxCount; i++) {
-            factors[i] = getBandFactor(settings[i]);
+        if (!factorsDirty && cachedFactors != null) {
+            return Arrays.copyOf(cachedFactors, BANDS);
         }
 
-        return factors;
+        if (cachedFactors == null) {
+            cachedFactors = new float[BANDS];
+        }
+
+        for (int i = 0; i < BANDS; i++) {
+            cachedFactors[i] = getBandFactor(settings[i]);
+        }
+
+        factorsDirty = false;
+        return Arrays.copyOf(cachedFactors, BANDS);
     }
 
     /**
@@ -167,6 +181,18 @@ public final class Equalizer {
 
         float f = (float) Math.pow(2.0, eq);
         return f;
+    }
+
+    /**
+     * Backward-compatible alias for {@link #getBandFactors()}.
+     *
+     * Older code expected an "optimize" method returning the band
+     * factors — provide it here to remain backward compatible.
+     *
+     * @return an array of factors for the 32 subbands
+     */
+    public float[] optimize() {
+        return getBandFactors();
     }
 
     static abstract public class EQFunction {

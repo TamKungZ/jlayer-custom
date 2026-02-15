@@ -37,13 +37,12 @@ import java.util.Objects;
  * }
  * }</pre>
  */
-public class WaveFileReader implements Closeable, AutoCloseable {
+public class WaveFileReader implements Closeable {
 
     private InputStream in;
     private int sampleRate;
     private short bitsPerSample;
     private short numChannels;
-    private long dataStart;
     private long dataSize;
     private long bytesReadFromData;
     private File sourceFile;
@@ -116,7 +115,6 @@ public class WaveFileReader implements Closeable, AutoCloseable {
             throw new IOException("Not a RIFF file (found: " + riff + ")");
         }
         
-        int fileSize = leInt(buf, 4);
         String wave = new String(buf, 8, 4, "US-ASCII");
         if (!"WAVE".equals(wave)) {
             throw new IOException("Not a WAVE file (found: " + wave + ")");
@@ -132,53 +130,55 @@ public class WaveFileReader implements Closeable, AutoCloseable {
             String id = new String(hdr, 0, 4, "US-ASCII");
             int chunkSize = leInt(hdr, 4);
 
-            if ("fmt ".equals(id)) {
-                if (chunkSize < 16) {
-                    throw new IOException("Invalid fmt chunk size: " + chunkSize);
+            switch (id) {
+                case "fmt " -> {
+                    if (chunkSize < 16) {
+                        throw new IOException("Invalid fmt chunk size: " + chunkSize);
+                    }
+                    
+                    byte[] fmt = new byte[chunkSize];
+                    readFully(fmt, 0, chunkSize);
+                    
+                    int audioFormat = (fmt[0] & 0xFF) | ((fmt[1] & 0xFF) << 8);
+                    if (audioFormat != 1) {
+                        throw new IOException("Only PCM WAV supported (format=" + audioFormat + ")");
+                    }
+                    
+                    numChannels = (short) ((fmt[2] & 0xFF) | ((fmt[3] & 0xFF) << 8));
+                    if (numChannels < 1 || numChannels > 16) {
+                        throw new IOException("Invalid channel count: " + numChannels);
+                    }
+                    
+                    sampleRate = leInt(fmt, 4);
+                    if (sampleRate <= 0 || sampleRate > 192000) {
+                        throw new IOException("Invalid sample rate: " + sampleRate);
+                    }
+                    
+                    bitsPerSample = (short) ((fmt[14] & 0xFF) | ((fmt[15] & 0xFF) << 8));
+                    if (bitsPerSample != 8 && bitsPerSample != 16 && bitsPerSample != 24) {
+                        throw new IOException("Unsupported bits per sample: " + bitsPerSample);
+                    }
+                    
+                    fmtFound = true;
+                    
+                    // Handle odd-sized chunks (padding byte)
+                    if (chunkSize % 2 == 1) {
+                        in.read(); // Skip padding byte
+                    }
                 }
-                
-                byte[] fmt = new byte[chunkSize];
-                readFully(fmt, 0, chunkSize);
-                
-                int audioFormat = (fmt[0] & 0xFF) | ((fmt[1] & 0xFF) << 8);
-                if (audioFormat != 1) {
-                    throw new IOException("Only PCM WAV supported (format=" + audioFormat + ")");
+                case "data" -> {
+                    dataSize = chunkSize;
+                    bytesReadFromData = 0;
+                    dataFound = true;
                 }
-                
-                numChannels = (short) ((fmt[2] & 0xFF) | ((fmt[3] & 0xFF) << 8));
-                if (numChannels < 1 || numChannels > 16) {
-                    throw new IOException("Invalid channel count: " + numChannels);
-                }
-                
-                sampleRate = leInt(fmt, 4);
-                if (sampleRate <= 0 || sampleRate > 192000) {
-                    throw new IOException("Invalid sample rate: " + sampleRate);
-                }
-                
-                bitsPerSample = (short) ((fmt[14] & 0xFF) | ((fmt[15] & 0xFF) << 8));
-                if (bitsPerSample != 8 && bitsPerSample != 16 && bitsPerSample != 24) {
-                    throw new IOException("Unsupported bits per sample: " + bitsPerSample);
-                }
-                
-                fmtFound = true;
-                
-                // Handle odd-sized chunks (padding byte)
-                if (chunkSize % 2 == 1) {
-                    in.read(); // Skip padding byte
-                }
-            } else if ("data".equals(id)) {
-                dataSize = chunkSize;
-                dataStart = -1; // not tracked for InputStream
-                bytesReadFromData = 0;
-                dataFound = true;
-                break; // data follows immediately
-            } else {
-                // Skip unknown chunk
-                skipChunk(chunkSize);
-                
-                // Handle odd-sized chunks (padding byte)
-                if (chunkSize % 2 == 1) {
-                    in.read(); // Skip padding byte
+                default -> {
+                    // Skip unknown chunk
+                    skipChunk(chunkSize);
+                    
+                    // Handle odd-sized chunks (padding byte)
+                    if (chunkSize % 2 == 1) {
+                        in.read(); // Skip padding byte
+                    }
                 }
             }
         }
@@ -278,36 +278,40 @@ public class WaveFileReader implements Closeable, AutoCloseable {
         
         // Convert based on bit depth
         int p = offset;
-        if (bitsPerSample == 16) {
-            ByteBuffer bb = ByteBuffer.wrap(tmp, 0, total);
-            bb.order(ByteOrder.LITTLE_ENDIAN);
-            for (int i = 0; i < samplesRead; i++) {
-                for (int ch = 0; ch < numChannels; ch++) {
-                    short s = bb.getShort();
-                    buffer[p++] = s;
+        switch (bitsPerSample) {
+            case 16 -> {
+                ByteBuffer bb = ByteBuffer.wrap(tmp, 0, total);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < samplesRead; i++) {
+                    for (int ch = 0; ch < numChannels; ch++) {
+                        short s = bb.getShort();
+                        buffer[p++] = s;
+                    }
                 }
             }
-        } else if (bitsPerSample == 8) {
-            // 8-bit unsigned to signed 16-bit
-            int idx = 0;
-            for (int i = 0; i < samplesRead; i++) {
-                for (int ch = 0; ch < numChannels; ch++) {
-                    int v = tmp[idx++] & 0xFF;
-                    short s = (short) ((v - 128) << 8);
-                    buffer[p++] = s;
+            case 8 -> {
+                // 8-bit unsigned to signed 16-bit
+                int idx = 0;
+                for (int i = 0; i < samplesRead; i++) {
+                    for (int ch = 0; ch < numChannels; ch++) {
+                        int v = tmp[idx++] & 0xFF;
+                        short s = (short) ((v - 128) << 8);
+                        buffer[p++] = s;
+                    }
                 }
             }
-        } else if (bitsPerSample == 24) {
-            // 24-bit to 16-bit (take upper 16 bits)
-            int idx = 0;
-            for (int i = 0; i < samplesRead; i++) {
-                for (int ch = 0; ch < numChannels; ch++) {
-                    int low = tmp[idx++] & 0xFF;
-                    int mid = tmp[idx++] & 0xFF;
-                    int high = tmp[idx++] & 0xFF;
-                    // Use middle and high bytes for 16-bit
-                    short s = (short) ((mid) | (high << 8));
-                    buffer[p++] = s;
+            case 24 -> {
+                // 24-bit to 16-bit (take upper 16 bits)
+                int idx = 0;
+                for (int i = 0; i < samplesRead; i++) {
+                    for (int ch = 0; ch < numChannels; ch++) {
+                        idx++; // Skip low byte
+                        int mid = tmp[idx++] & 0xFF;
+                        int high = tmp[idx++] & 0xFF;
+                        // Use middle and high bytes for 16-bit
+                        short s = (short) ((mid) | (high << 8));
+                        buffer[p++] = s;
+                    }
                 }
             }
         }

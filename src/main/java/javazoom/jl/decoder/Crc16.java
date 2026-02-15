@@ -111,6 +111,7 @@ public final class Crc16 {
      * 
      * @deprecated Use {@link #update(int, int)} for better naming consistency
      */
+    @Deprecated
     public void addBits(int bitString, int length) {
         validateLength(length);
         updateInternal(bitString, length);

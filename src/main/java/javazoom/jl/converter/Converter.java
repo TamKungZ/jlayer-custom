@@ -145,7 +145,7 @@ public class Converter {
                                     Decoder.Params decoderParams) throws JavaLayerException {
         Objects.requireNonNull(sourcePath, "Source path cannot be null");
         
-        String destName = null;
+        String destName;
         if (destPath != null) {
             destName = destPath.toString();
         } else {
@@ -164,10 +164,8 @@ public class Converter {
             destName = generateOutputName(sourceName);
         }
         
-        try {
-            InputStream in = openInput(sourceName);
+        try (InputStream in = openInput(sourceName)) {
             convert(in, destName, progressListener, decoderParams);
-            in.close();
         } catch (IOException ioe) {
             throw new JavaLayerException(ioe.getLocalizedMessage(), ioe);
         }
@@ -266,7 +264,7 @@ public class Converter {
                         stream.closeFrame();
                         stats.framesProcessed = frame + 1;
 
-                    } catch (Exception ex) {
+                    } catch (JavaLayerException | InternalError ex) {
                         stats.errorCount++;
                         boolean stop = !progressListener.converterException(ex);
 
@@ -446,8 +444,8 @@ public class Converter {
         static public final int DEBUG_DETAIL = 7;
         static public final int MAX_DETAIL = 10;
 
-        private PrintWriter pw;
-        private int detailLevel;
+        private final PrintWriter pw;
+        private final int detailLevel;
         private long lastUpdateTime = 0;
         private static final long UPDATE_INTERVAL = 1000; // 1 second
 
@@ -468,16 +466,16 @@ public class Converter {
         public void converterUpdate(int updateID, int param1, int param2) {
             if (isDetail(VERBOSE_DETAIL)) {
                 switch (updateID) {
-                case UPDATE_CONVERT_COMPLETE:
-                    if (param2 == 0) param2 = 1;
-                    pw.println();
-                    pw.println("Converted " + param2 + " frames in " + param1 + " ms (" + 
-                              (param1 / param2) + " ms per frame.)");
-                    break;
-                case UPDATE_CANCELLED:
-                    pw.println();
-                    pw.println("Conversion cancelled after " + param2 + " frames.");
-                    break;
+                    case UPDATE_CONVERT_COMPLETE -> {
+                        if (param2 == 0) param2 = 1;
+                        pw.println();
+                        pw.println("Converted " + param2 + " frames in " + param1 + " ms (" + 
+                                  (param1 / param2) + " ms per frame.)");
+                    }
+                    case UPDATE_CANCELLED -> {
+                        pw.println();
+                        pw.println("Conversion cancelled after " + param2 + " frames.");
+                    }
                 }
             }
         }
