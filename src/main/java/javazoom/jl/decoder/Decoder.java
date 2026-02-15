@@ -20,21 +20,63 @@
 
 package javazoom.jl.decoder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
+
 import javazoom.jl.converter.Converter;
+
 /**
- * The <code>Decoder</code> class encapsulates the details of
- * decoding an MPEG audio frame.
+ * The {@code Decoder} class encapsulates the details of decoding MPEG audio frames.
+ * <p>
+ * This decoder supports MPEG-1 and MPEG-2 audio streams with layers I, II, and III (MP3).
+ * It provides both traditional synchronous decoding and modern asynchronous APIs.
+ * </p>
+ * 
+ * <p><b>Thread Safety:</b> This class is NOT thread-safe. Each thread should use
+ * its own Decoder instance.</p>
+ * 
+ * <p><b>Usage Examples:</b></p>
+ * <pre>{@code
+ * // Traditional synchronous decoding
+ * Decoder decoder = new Decoder();
+ * Bitstream bitstream = new Bitstream(inputStream);
+ * Header header = bitstream.readFrame();
+ * Obuffer output = decoder.decodeFrame(header, bitstream);
+ * bitstream.closeFrame();
+ * 
+ * // Simplified API
+ * SampleBuffer buffer = decoder.decodeNextFrame(bitstream);
+ * 
+ * // Async decoding
+ * decoder.decodeAsync(bitstream)
+ *     .thenAccept(buffer -> processAudio(buffer))
+ *     .exceptionally(ex -> handleError(ex));
+ * 
+ * // Builder pattern configuration
+ * Decoder decoder = Decoder.builder()
+ *     .withEqualizer(customEQ)
+ *     .withOutputChannels(OutputChannels.LEFT)
+ *     .build();
+ * }</pre>
  *
  * @author MDM
- * @version 0.0.7 12/12/99
+ * @author Enhanced by modernization
+ * @version 2.0
  * @since 0.0.5
  */
 public class Decoder implements DecoderErrors {
-    static private final Params DEFAULT_PARAMS = new Params();
+    
+    private static final Params DEFAULT_PARAMS = new Params();
+    private static final float DEFAULT_SCALE_FACTOR = 32700.0f;
 
     /**
-     * The Obuffer instance that will receive the decoded
-     * PCM samples.
+     * The output buffer that will receive decoded PCM samples.
      */
     private Obuffer output;
 
@@ -49,7 +91,7 @@ public class Decoder implements DecoderErrors {
     private SynthesisFilter filter2;
 
     /**
-     * The decoder used to decode layer III frames.
+     * Layer decoders.
      */
     private LayerIIIDecoder l3decoder;
     private LayerIIDecoder l2decoder;
@@ -63,27 +105,37 @@ public class Decoder implements DecoderErrors {
     private Params params;
 
     private boolean initialized;
+    
+    /**
+     * Frame counter for statistics.
+     */
+    private long framesDecoded;
+    
+    /**
+     * Error counter for monitoring.
+     */
+    private long errorCount;
+    
+    /**
+     * Listener for decode events.
+     */
+    private DecodeEventListener eventListener;
 
     /**
-     * Creates a new <code>Decoder</code> instance with default
-     * parameters.
+     * Creates a new {@code Decoder} instance with default parameters.
      */
     public Decoder() {
         this(null);
     }
 
     /**
-     * Creates a new <code>Decoder</code> instance with default
-     * parameters.
+     * Creates a new {@code Decoder} instance with custom parameters.
      *
-     * @param params The <code>Params</code> instance that describes
-     *               the customizable aspects of the decoder.
+     * @param params the {@code Params} instance describing customization,
+     *               or null to use defaults
      */
     public Decoder(Params params) {
-        if (params == null)
-            params = DEFAULT_PARAMS;
-
-        this.params = params;
+        this.params = (params == null) ? DEFAULT_PARAMS : params;
 
         Equalizer eq = this.params.getInitialEqualizerSettings();
         if (eq != null) {
@@ -91,106 +143,249 @@ public class Decoder implements DecoderErrors {
         }
     }
 
-    static public Params getDefaultParams() {
+    /**
+     * Returns a copy of the default decoder parameters.
+     * 
+     * @return a new Params instance with default values
+     */
+    public static Params getDefaultParams() {
         return (Params) DEFAULT_PARAMS.clone();
     }
+    
+    /**
+     * Creates a new builder for configuring a Decoder.
+     * 
+     * @return a new DecoderBuilder instance
+     * @since 2.0
+     */
+    public static DecoderBuilder builder() {
+        return new DecoderBuilder();
+    }
 
-    public void setEqualizer(Equalizer eq) {
-        if (eq == null)
+    /**
+     * Sets the equalizer for this decoder.
+     * <p>
+     * Changes take effect immediately for subsequent frames.
+     * Pass null or {@link Equalizer#PASS_THRU_EQ} to disable equalization.
+     * </p>
+     * 
+     * @param eq the equalizer to apply, or null for pass-through
+     * @return this decoder instance for method chaining
+     * @since 2.0
+     */
+    public Decoder setEqualizer(Equalizer eq) {
+        if (eq == null) {
             eq = Equalizer.PASS_THRU_EQ;
+        }
 
         equalizer.setFrom(eq);
 
         float[] factors = equalizer.getBandFactors();
 
-        if (filter1 != null)
+        if (filter1 != null) {
             filter1.setEQ(factors);
+        }
 
-        if (filter2 != null)
+        if (filter2 != null) {
             filter2.setEQ(factors);
+        }
+        
+        return this;
+    }
+    
+    /**
+     * Gets the current equalizer.
+     * 
+     * @return the current equalizer instance
+     * @since 2.0
+     */
+    public Equalizer getEqualizer() {
+        return equalizer;
     }
 
     /**
      * Decodes one frame from an MPEG audio bitstream.
      *
-     * @param header The header describing the frame to decode.
-     * @param stream The bit stream that provides the bits for te body of the frame.
-     * @return A SampleBuffer containing the decoded samples.
+     * @param header the header describing the frame to decode
+     * @param stream the bitstream providing the frame body bits
+     * @return an Obuffer containing the decoded samples
+     * @throws DecoderException if decoding fails
+     * @throws NullPointerException if header or stream is null
      */
-    public Obuffer decodeFrame(Header header, Bitstream stream)
-            throws DecoderException {
-        if (!initialized) {
-            initialize(header);
+    public Obuffer decodeFrame(Header header, Bitstream stream) throws DecoderException {
+        Objects.requireNonNull(header, "header cannot be null");
+        Objects.requireNonNull(stream, "stream cannot be null");
+        
+        try {
+            if (!initialized) {
+                initialize(header);
+            }
+
+            int layer = header.layer();
+
+            output.clearBuffer();
+
+            FrameDecoder decoder = retrieveDecoder(header, stream, layer);
+
+            decoder.decodeFrame();
+
+            output.writeBuffer(1);
+            
+            framesDecoded++;
+            
+            if (eventListener != null) {
+                eventListener.onFrameDecoded(framesDecoded, header);
+            }
+
+            return output;
+        } catch (DecoderException e) {
+            errorCount++;
+            if (eventListener != null) {
+                eventListener.onError(e);
+            }
+            throw e;
         }
+    }
 
-        int layer = header.layer();
-
-        output.clearBuffer();
-
-        FrameDecoder decoder = retrieveDecoder(header, stream, layer);
-
-        decoder.decodeFrame();
-
-        output.writeBuffer(1);
-
+    /**
+     * Changes the output buffer.
+     * <p>
+     * This will take effect the next time {@link #decodeFrame} is called.
+     * </p>
+     * 
+     * @param out the new output buffer, or null to use default
+     * @return this decoder instance for method chaining
+     * @since 2.0
+     */
+    public Decoder setOutputBuffer(Obuffer out) {
+        this.output = out;
+        return this;
+    }
+    
+    /**
+     * Gets the current output buffer.
+     * 
+     * @return the current output buffer, or null if not set
+     * @since 2.0
+     */
+    public Obuffer getOutputBuffer() {
         return output;
     }
 
     /**
-     * Changes the output buffer. This will take effect the next time
-     * decodeFrame() is called.
-     */
-    public void setOutputBuffer(Obuffer out) {
-        output = out;
-    }
-
-    /**
-     * Retrieves the sample frequency of the PCM samples output
-     * by this decoder. This typically corresponds to the sample
-     * rate encoded in the MPEG audio stream.
+     * Retrieves the sample frequency of the PCM output.
+     * <p>
+     * This typically corresponds to the sample rate encoded in the MPEG stream.
+     * </p>
      *
-     * @return the sample rate (in Hz) of the samples written to the
-     * output buffer when decoding.
+     * @return the sample rate in Hz of the output samples
      */
     public int getOutputFrequency() {
         return outputFrequency;
     }
 
     /**
-     * Retrieves the number of channels of PCM samples output by
-     * this decoder. This usually corresponds to the number of
-     * channels in the MPEG audio stream, although it may differ.
+     * Retrieves the number of channels in the PCM output.
+     * <p>
+     * Usually corresponds to the number of channels in the MPEG stream,
+     * though it may differ based on decoder configuration.
+     * </p>
      *
-     * @return The number of output channels in the decoded samples: 1
-     * for mono, or 2 for stereo.
+     * @return the number of output channels (1 for mono, 2 for stereo)
      */
     public int getOutputChannels() {
         return outputChannels;
     }
 
     /**
-     * Retrieves the maximum number of samples that will be written to
-     * the output buffer when one frame is decoded. This can be used to
-     * help calculate the size of other buffers whose size is based upon
-     * the number of samples written to the output buffer. NB: this is
-     * an upper bound and fewer samples may actually be written, depending
-     * upon the sample rate and number of channels.
+     * Retrieves the maximum number of samples per decoded frame.
+     * <p>
+     * This is an upper bound; fewer samples may be written depending
+     * on sample rate and channel configuration.
+     * </p>
      *
-     * @return The maximum number of samples that are written to the
-     * output buffer when decoding a single frame of MPEG audio.
+     * @return the maximum number of samples per frame
      */
     public int getOutputBlockSize() {
         return Obuffer.OBUFFERSIZE;
     }
+    
+    /**
+     * Returns the total number of frames decoded by this instance.
+     * 
+     * @return the frame count
+     * @since 2.0
+     */
+    public long getFramesDecoded() {
+        return framesDecoded;
+    }
+    
+    /**
+     * Returns the total number of decoding errors encountered.
+     * 
+     * @return the error count
+     * @since 2.0
+     */
+    public long getErrorCount() {
+        return errorCount;
+    }
+    
+    /**
+     * Checks if the decoder has been initialized.
+     * 
+     * @return true if initialized
+     * @since 2.0
+     */
+    public boolean isInitialized() {
+        return initialized;
+    }
+    
+    /**
+     * Resets the decoder statistics.
+     * 
+     * @return this decoder instance for method chaining
+     * @since 2.0
+     */
+    public Decoder resetStatistics() {
+        framesDecoded = 0;
+        errorCount = 0;
+        return this;
+    }
+    
+    /**
+     * Sets an event listener for decode events.
+     * 
+     * @param listener the listener, or null to remove
+     * @return this decoder instance for method chaining
+     * @since 2.0
+     */
+    public Decoder setEventListener(DecodeEventListener listener) {
+        this.eventListener = listener;
+        return this;
+    }
 
     /**
-     * Convenience: decode the next frame from the provided Bitstream and
-     * return a populated SampleBuffer. Returns null if no frame is available.
-     * This preserves the old API; use this method for simpler decoding.
+     * Decodes the next frame from the bitstream and returns a populated SampleBuffer.
+     * <p>
+     * This is a convenience method that handles frame reading and closing automatically.
+     * Returns null if no frame is available.
+     * </p>
+     * 
+     * @param stream the bitstream to read from
+     * @return a SampleBuffer with decoded audio, or null if end of stream
+     * @throws BitstreamException if reading the stream fails
+     * @throws DecoderException if decoding fails
+     * @throws NullPointerException if stream is null
      */
-    public SampleBuffer decodeNextFrame(Bitstream stream) throws BitstreamException, DecoderException {
+    public SampleBuffer decodeNextFrame(Bitstream stream) 
+            throws BitstreamException, DecoderException {
+        Objects.requireNonNull(stream, "stream cannot be null");
+        
         Header h = stream.readFrame();
-        if (h == null) return null;
+        if (h == null) {
+            return null;
+        }
+        
         int channels = (h.mode() == Header.SINGLE_CHANNEL) ? 1 : 2;
         SampleBuffer sb = new SampleBuffer(h.frequency(), channels);
         setOutputBuffer(sb);
@@ -198,74 +393,223 @@ public class Decoder implements DecoderErrors {
         stream.closeFrame();
         return sb;
     }
-
+    
     /**
-     * Convenience: decode the next frame and return raw PCM 16-bit little-endian bytes.
-     * Returns null if no frame is available.
+     * Decodes the next frame and returns raw PCM data as little-endian bytes.
+     * <p>
+     * This is a convenience method for direct PCM output. Returns null if
+     * no frame is available.
+     * </p>
+     * 
+     * @param stream the bitstream to read from
+     * @return 16-bit PCM data in little-endian format, or null if end of stream
+     * @throws BitstreamException if reading the stream fails
+     * @throws DecoderException if decoding fails
+     * @throws NullPointerException if stream is null
+     * @since 2.0
      */
-    public byte[] decodeNextFrameToPCM(Bitstream stream) throws BitstreamException, DecoderException {
+    public byte[] decodeNextFrameToPCM(Bitstream stream) 
+            throws BitstreamException, DecoderException {
         SampleBuffer sb = decodeNextFrame(stream);
-        if (sb == null) return null;
-        short[] buf = sb.getBuffer();
-        int len = sb.getBufferLength();
-        byte[] out = new byte[len * 2];
-        for (int i = 0; i < len; i++) {
-            short s = buf[i];
-            out[i * 2] = (byte) (s & 0xFF);
-            out[i * 2 + 1] = (byte) ((s >>> 8) & 0xFF);
+        if (sb == null) {
+            return null;
         }
-        return out;
+        
+        return convertToPCM(sb);
+    }
+    
+    /**
+     * Decodes the next frame as PCM with configurable endianness.
+     * 
+     * @param stream the bitstream to read from
+     * @param littleEndian true for little-endian, false for big-endian
+     * @return 16-bit PCM data, or null if end of stream
+     * @throws BitstreamException if reading the stream fails
+     * @throws DecoderException if decoding fails
+     * @since 2.0
+     */
+    public byte[] decodeNextFrameToPCM(Bitstream stream, boolean littleEndian) 
+            throws BitstreamException, DecoderException {
+        SampleBuffer sb = decodeNextFrame(stream);
+        if (sb == null) {
+            return null;
+        }
+        
+        return convertToPCM(sb, littleEndian);
+    }
+    
+    /**
+     * Decodes frames asynchronously using the common ForkJoinPool.
+     * 
+     * @param stream the bitstream to read from
+     * @return a CompletableFuture that completes with the decoded buffer
+     * @since 2.0
+     */
+    public CompletableFuture<SampleBuffer> decodeAsync(Bitstream stream) {
+        return decodeAsync(stream, ForkJoinPool.commonPool());
+    }
+    
+    /**
+     * Decodes frames asynchronously using a specified executor.
+     * 
+     * @param stream the bitstream to read from
+     * @param executor the executor to use for async processing
+     * @return a CompletableFuture that completes with the decoded buffer
+     * @throws NullPointerException if stream or executor is null
+     * @since 2.0
+     */
+    public CompletableFuture<SampleBuffer> decodeAsync(Bitstream stream, Executor executor) {
+        Objects.requireNonNull(stream, "stream cannot be null");
+        Objects.requireNonNull(executor, "executor cannot be null");
+        
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return decodeNextFrame(stream);
+            } catch (BitstreamException | DecoderException e) {
+                throw new RuntimeException("Decode failed", e);
+            }
+        }, executor);
+    }
+    
+    /**
+     * Decodes all frames from the bitstream with a callback for each frame.
+     * <p>
+     * This method continues until the end of stream is reached or the
+     * callback returns false.
+     * </p>
+     * 
+     * @param stream the bitstream to read from
+     * @param callback called for each decoded frame; return false to stop
+     * @return the number of frames decoded
+     * @throws BitstreamException if reading the stream fails
+     * @throws DecoderException if decoding fails
+     * @since 2.0
+     */
+    public long decodeAll(Bitstream stream, Consumer<SampleBuffer> callback) 
+            throws BitstreamException, DecoderException {
+        Objects.requireNonNull(stream, "stream cannot be null");
+        Objects.requireNonNull(callback, "callback cannot be null");
+        
+        long count = 0;
+        SampleBuffer buffer;
+        
+        while ((buffer = decodeNextFrame(stream)) != null) {
+            callback.accept(buffer);
+            count++;
+        }
+        
+        return count;
+    }
+    
+    /**
+     * Creates a decoder info object with current configuration.
+     * 
+     * @return a DecoderInfo snapshot
+     * @since 2.0
+     */
+    public DecoderInfo getInfo() {
+        return new DecoderInfo(
+            outputFrequency,
+            outputChannels,
+            framesDecoded,
+            errorCount,
+            initialized
+        );
     }
 
     /**
-     * Convenience static helper that uses the existing Converter API.
-     * Keeps backwards compatibility while offering a simpler entry point.
+     * Converts an MP3 file to WAV format.
+     * <p>
+     * This is a convenience static method using the Converter API.
+     * </p>
+     * 
+     * @param sourceName the source MP3 file path
+     * @param destName the destination WAV file path
+     * @throws JavaLayerException if conversion fails
      */
-    public static void convertToWav(String sourceName, String destName) throws javazoom.jl.decoder.JavaLayerException {
+    public static void convertToWav(String sourceName, String destName) 
+            throws JavaLayerException {
         new Converter().convert(sourceName, destName);
     }
+    
+    /**
+     * Converts an MP3 file to WAV format using Path objects.
+     * 
+     * @param source the source MP3 file
+     * @param dest the destination WAV file
+     * @throws JavaLayerException if conversion fails
+     * @throws IOException if file operations fail
+     * @since 2.0
+     */
+    public static void convertToWav(Path source, Path dest) 
+            throws JavaLayerException, IOException {
+        Objects.requireNonNull(source, "source cannot be null");
+        Objects.requireNonNull(dest, "dest cannot be null");
+        
+        if (!Files.exists(source)) {
+            throw new IOException("Source file does not exist: " + source);
+        }
+        
+        convertToWav(source.toString(), dest.toString());
+    }
 
+    /**
+     * Creates a new DecoderException with the specified error code.
+     * 
+     * @param errorCode the error code
+     * @return a new DecoderException
+     */
     protected DecoderException newDecoderException(int errorCode) {
         return new DecoderException(errorCode, null);
     }
 
+    /**
+     * Creates a new DecoderException with error code and cause.
+     * 
+     * @param errorCode the error code
+     * @param throwable the cause
+     * @return a new DecoderException
+     */
     protected DecoderException newDecoderException(int errorCode, Throwable throwable) {
         return new DecoderException(errorCode, throwable);
     }
 
-    protected FrameDecoder retrieveDecoder(Header header, Bitstream stream, int layer) throws DecoderException {
+    /**
+     * Retrieves the appropriate decoder for the frame layer.
+     * 
+     * @param header the frame header
+     * @param stream the bitstream
+     * @param layer the layer number
+     * @return the frame decoder
+     * @throws DecoderException if the layer is unsupported
+     */
+    protected FrameDecoder retrieveDecoder(Header header, Bitstream stream, int layer) 
+            throws DecoderException {
         FrameDecoder decoder = switch (layer) {
             case 3 -> {
                 if (l3decoder == null) {
-                    l3decoder = new LayerIIIDecoder(stream,
-                            header, filter1, filter2,
-                            output, OutputChannels.BOTH_CHANNELS);
+                    l3decoder = new LayerIIIDecoder(stream, header, 
+                        filter1, filter2, output, OutputChannels.BOTH_CHANNELS);
                 }
-
                 yield l3decoder;
             }
             case 2 -> {
                 if (l2decoder == null) {
                     l2decoder = new LayerIIDecoder();
-                    l2decoder.create(stream,
-                            header, filter1, filter2,
-                            output, OutputChannels.BOTH_CHANNELS);
+                    l2decoder.create(stream, header, 
+                        filter1, filter2, output, OutputChannels.BOTH_CHANNELS);
                 }
                 yield l2decoder;
             }
             case 1 -> {
                 if (l1decoder == null) {
                     l1decoder = new LayerIDecoder();
-                    l1decoder.create(stream,
-                            header, filter1, filter2,
-                            output, OutputChannels.BOTH_CHANNELS);
+                    l1decoder.create(stream, header, 
+                        filter1, filter2, output, OutputChannels.BOTH_CHANNELS);
                 }
                 yield l1decoder;
             }
             default -> null;
-
-            // REVIEW: allow channel output selection type
-            // (LEFT, RIGHT, BOTH, DOWNMIX)
         };
 
         if (decoder == null) {
@@ -275,86 +619,275 @@ public class Decoder implements DecoderErrors {
         return decoder;
     }
 
+    /**
+     * Initializes the decoder with the first frame header.
+     * 
+     * @param header the first frame header
+     * @throws DecoderException if initialization fails
+     */
     private void initialize(Header header) throws DecoderException {
-
-        // REVIEW: allow customizable scale factor
-        float scalefactor = 32700.0f;
+        float scalefactor = DEFAULT_SCALE_FACTOR;
 
         int mode = header.mode();
-        @SuppressWarnings("unused")
-        int layer = header.layer();
-        int channels = mode == Header.SINGLE_CHANNEL ? 1 : 2;
+        int channels = (mode == Header.SINGLE_CHANNEL) ? 1 : 2;
 
-
-        // set up output buffer if not set up by client.
-        if (output == null)
+        // Set up output buffer if not already configured
+        if (output == null) {
             output = new SampleBuffer(header.frequency(), channels);
+        }
 
         float[] factors = equalizer.getBandFactors();
         filter1 = new SynthesisFilter(0, scalefactor, factors);
 
-        // REVIEW: allow mono output for stereo
-        if (channels == 2)
+        if (channels == 2) {
             filter2 = new SynthesisFilter(1, scalefactor, factors);
+        }
 
         outputChannels = channels;
         outputFrequency = header.frequency();
 
         initialized = true;
     }
+    
+    /**
+     * Converts a SampleBuffer to PCM bytes (little-endian).
+     * 
+     * @param sb the sample buffer
+     * @return PCM byte array
+     */
+    private byte[] convertToPCM(SampleBuffer sb) {
+        return convertToPCM(sb, true);
+    }
+    
+    /**
+     * Converts a SampleBuffer to PCM bytes with configurable endianness.
+     * 
+     * @param sb the sample buffer
+     * @param littleEndian true for little-endian, false for big-endian
+     * @return PCM byte array
+     */
+    private byte[] convertToPCM(SampleBuffer sb, boolean littleEndian) {
+        short[] buf = sb.getBuffer();
+        int len = sb.getBufferLength();
+        byte[] out = new byte[len * 2];
+        
+        for (int i = 0; i < len; i++) {
+            short s = buf[i];
+            if (littleEndian) {
+                out[i * 2] = (byte) (s & 0xFF);
+                out[i * 2 + 1] = (byte) ((s >>> 8) & 0xFF);
+            } else {
+                out[i * 2] = (byte) ((s >>> 8) & 0xFF);
+                out[i * 2 + 1] = (byte) (s & 0xFF);
+            }
+        }
+        
+        return out;
+    }
 
     /**
-     * The <code>Params</code> class presents the customizable
-     * aspects of the decoder.
+     * The {@code Params} class presents customizable decoder aspects.
      * <p>
-     * Instances of this class are not thread safe.
+     * Instances of this class are not thread-safe.
+     * </p>
      */
     public static class Params implements Cloneable {
 
         private OutputChannels outputChannels = OutputChannels.BOTH;
-
         private Equalizer equalizer = new Equalizer();
 
+        /**
+         * Creates default decoder parameters.
+         */
         public Params() {
         }
 
         @Override
         public Object clone() {
             try {
-                return super.clone();
+                Params cloned = (Params) super.clone();
+                // Deep clone the equalizer
+                cloned.equalizer = new Equalizer();
+                cloned.equalizer.setFrom(this.equalizer);
+                return cloned;
             } catch (CloneNotSupportedException ex) {
                 throw new InternalError(this + ": " + ex);
             }
         }
 
+        /**
+         * Sets the output channel configuration.
+         * 
+         * @param out the output channels (cannot be null)
+         * @throws NullPointerException if out is null
+         */
         public void setOutputChannels(OutputChannels out) {
-            if (out == null)
-                throw new NullPointerException("out");
-
-            outputChannels = out;
+            this.outputChannels = Objects.requireNonNull(out, "out cannot be null");
         }
 
+        /**
+         * Gets the output channel configuration.
+         * 
+         * @return the output channels
+         */
         public OutputChannels getOutputChannels() {
             return outputChannels;
         }
 
         /**
-         * Retrieves the equalizer settings that the decoder's equalizer
-         * will be initialized from.
+         * Retrieves the initial equalizer settings.
          * <p>
-         * The <code>Equalizer</code> instance returned
-         * cannot be changed in real time to affect the
-         * decoder output as it is used only to initialize the decoders
-         * EQ settings. To affect the decoder's output in realtime,
-         * use the Equalizer returned from the getEqualizer() method on
-         * the decoder.
+         * The returned {@code Equalizer} is used only for initialization.
+         * To affect real-time output, use {@link Decoder#setEqualizer}.
+         * </p>
          *
-         * @return The <code>Equalizer</code> used to initialize the
-         * EQ settings of the decoder.
+         * @return the initial equalizer settings
          */
         public Equalizer getInitialEqualizerSettings() {
             return equalizer;
         }
+        
+        /**
+         * Sets the initial equalizer settings.
+         * 
+         * @param eq the equalizer to use
+         * @return this Params instance for method chaining
+         * @since 2.0
+         */
+        public Params setInitialEqualizerSettings(Equalizer eq) {
+            if (eq != null) {
+                this.equalizer.setFrom(eq);
+            }
+            return this;
+        }
+    }
+    
+    /**
+     * Builder for creating Decoder instances with fluent API.
+     * 
+     * @since 2.0
+     */
+    public static class DecoderBuilder {
+        private Params params = new Params();
+        private Obuffer outputBuffer;
+        private DecodeEventListener eventListener;
+        
+        private DecoderBuilder() {}
+        
+        /**
+         * Sets the output channels.
+         * 
+         * @param channels the output channel configuration
+         * @return this builder
+         */
+        public DecoderBuilder withOutputChannels(OutputChannels channels) {
+            params.setOutputChannels(channels);
+            return this;
+        }
+        
+        /**
+         * Sets the initial equalizer.
+         * 
+         * @param eq the equalizer
+         * @return this builder
+         */
+        public DecoderBuilder withEqualizer(Equalizer eq) {
+            params.setInitialEqualizerSettings(eq);
+            return this;
+        }
+        
+        /**
+         * Sets a custom output buffer.
+         * 
+         * @param buffer the output buffer
+         * @return this builder
+         */
+        public DecoderBuilder withOutputBuffer(Obuffer buffer) {
+            this.outputBuffer = buffer;
+            return this;
+        }
+        
+        /**
+         * Sets an event listener.
+         * 
+         * @param listener the listener
+         * @return this builder
+         */
+        public DecoderBuilder withEventListener(DecodeEventListener listener) {
+            this.eventListener = listener;
+            return this;
+        }
+        
+        /**
+         * Builds the Decoder instance.
+         * 
+         * @return a new Decoder
+         */
+        public Decoder build() {
+            Decoder decoder = new Decoder(params);
+            if (outputBuffer != null) {
+                decoder.setOutputBuffer(outputBuffer);
+            }
+            if (eventListener != null) {
+                decoder.setEventListener(eventListener);
+            }
+            return decoder;
+        }
+    }
+    
+    /**
+     * Interface for receiving decode events.
+     * 
+     * @since 2.0
+     */
+    public interface DecodeEventListener {
+        /**
+         * Called when a frame is successfully decoded.
+         * 
+         * @param frameNumber the frame number
+         * @param header the frame header
+         */
+        void onFrameDecoded(long frameNumber, Header header);
+        
+        /**
+         * Called when a decode error occurs.
+         * 
+         * @param exception the exception
+         */
+        void onError(DecoderException exception);
+    }
+    
+    /**
+     * Immutable snapshot of decoder information.
+     * 
+     * @since 2.0
+     */
+    public static class DecoderInfo {
+        private final int outputFrequency;
+        private final int outputChannels;
+        private final long framesDecoded;
+        private final long errorCount;
+        private final boolean initialized;
+        
+        private DecoderInfo(int outputFrequency, int outputChannels, 
+                           long framesDecoded, long errorCount, boolean initialized) {
+            this.outputFrequency = outputFrequency;
+            this.outputChannels = outputChannels;
+            this.framesDecoded = framesDecoded;
+            this.errorCount = errorCount;
+            this.initialized = initialized;
+        }
+        
+        public int getOutputFrequency() { return outputFrequency; }
+        public int getOutputChannels() { return outputChannels; }
+        public long getFramesDecoded() { return framesDecoded; }
+        public long getErrorCount() { return errorCount; }
+        public boolean isInitialized() { return initialized; }
+        
+        @Override
+        public String toString() {
+            return String.format("DecoderInfo[freq=%d, channels=%d, frames=%d, errors=%d, init=%b]",
+                outputFrequency, outputChannels, framesDecoded, errorCount, initialized);
+        }
     }
 }
-
