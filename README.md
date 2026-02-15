@@ -1,4 +1,4 @@
-# JLayer - TamKungZ_ Custom Fork
+# JLayer - TamKungZ_ Custom Fork (v1.0.2.2)
 
 [![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/tamkungz/jlayer-rhythm)
 [![Status](https://img.shields.io/badge/Status-Stable-success)](https://github.com/tamkungz/jlayer-rhythm)
@@ -65,7 +65,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.tamkungz:jlayer-custom:1.0.2.1'
+    implementation 'com.github.tamkungz:jlayer-custom:1.0.2.2'
 }
 ```
 
@@ -76,7 +76,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'th.tamkungz:jlayer-custom:1.0.2.1'
+    implementation 'th.tamkungz:jlayer-custom:1.0.2.2'
 }
 ```
 
@@ -92,7 +92,7 @@ dependencies {
 <dependency>
     <groupId>com.github.tamkungz</groupId>
     <artifactId>jlayer-custom</artifactId>
-    <version>1.0.2.1</version>
+    <version>1.0.2.2</version>
 </dependency>
 ```
 
@@ -111,7 +111,17 @@ dependencies {
 - Allows decoder to skip corrupted frames
 - Maintains valid internal state after errors
 
-### 3. No API Changes
+### 3. New API Methods
+- **BitstreamException(Throwable)**: Better error chaining
+- **Bitstream.isClosed()** / **isEOF()**: State management
+- **Player.isClosed()**: Check player state
+- **jlp.stop()**: Controlled playback shutdown
+- **jlp.getPlayer()**: Access underlying Player instance
+- **jlp.isPlaying()**: Check active playback status
+- Enhanced VBR header parsing
+- Improved thread safety and resource cleanup
+
+### 4. No API Changes
 - **100% compatible** with original JLayer
 - Drop-in replacement - just change dependency
 - All existing code works without modification
@@ -123,12 +133,18 @@ dependencies {
 Tested with **254+ diverse MP3 files**:
 - ✅ CBR: 128kbps, 192kbps, 320kbps
 - ✅ VBR: LAME v3.98+, modern encoders  
-- ✅ Various sample rates: 44.1kHz, 48kHz
+- ✅ Various sample rates: 44.1kHz, 48kHz, 32kHz
 - ✅ Stereo and mono files
-- ✅ Files with ID3v1/v2 tags
+- ✅ Files with ID3v1/v2 tags and no tags
+
+**Comprehensive Test Suite (JUnit 5)**:
+- BitstreamTest: Header parsing, frame reading, state management
+- BitstreamEdgeCaseTest: Edge cases, concurrent access, large reads
+- JavaSoundAudioDeviceTest: Audio device creation and registry
+- jlpTest: Playback, volume control, thread safety
 
 **Before fix**: ~30% success rate (crashes on VBR/320kbps)  
-**After fix**: ~95% success rate
+**After fix**: **95%+** success rate
 
 ---
 
