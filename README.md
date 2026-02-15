@@ -58,29 +58,42 @@ if (wordPointer >= maxWords)
 
 ## Installation
 
-### Gradle (via JitPack)
+### Maven Central (Recommended)
+
+#### Maven
+```xml
+<dependency>
+    <groupId>io.github.tamkungz</groupId>
+    <artifactId>jlayer-custom</artifactId>
+    <version>1.0.2.2</version>
+</dependency>
+```
+
+#### Gradle
 ```gradle
 repositories {
-    maven { url 'https://jitpack.io' }
+    mavenCentral()
 }
 
 dependencies {
-    implementation 'com.github.tamkungz:jlayer-custom:1.0.2.2'
+    implementation 'io.github.tamkungz:jlayer-custom:1.0.2.2'
 }
 ```
 
-### Gradle (Personal Maven)
-```gradle
+#### Gradle Kotlin DSL
+```kotlin
 repositories {
-    maven { url 'https://tamkungz.github.io/maven' }
+    mavenCentral()
 }
 
 dependencies {
-    implementation 'th.tamkungz:jlayer-custom:1.0.2.2'
+    implementation("io.github.tamkungz:jlayer-custom:1.0.2.2")
 }
 ```
 
-### Maven (via JitPack)
+### Alternative: JitPack
+
+#### Maven
 ```xml
 <repositories>
     <repository>
@@ -94,6 +107,17 @@ dependencies {
     <artifactId>jlayer-custom</artifactId>
     <version>1.0.2.2</version>
 </dependency>
+```
+
+#### Gradle
+```gradle
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.tamkungz:jlayer-custom:1.0.2.2'
+}
 ```
 
 ---

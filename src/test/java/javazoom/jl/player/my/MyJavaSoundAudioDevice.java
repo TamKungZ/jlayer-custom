@@ -4,7 +4,6 @@
 
 package javazoom.jl.player.my;
 
-import java.util.logging.Level;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -16,7 +15,6 @@ import javax.sound.sampled.SourceDataLine;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.AudioDeviceBase;
 import javazoom.jl.player.AudioDeviceFactory;
-import vavi.util.Debug;
 
 
 /**
@@ -63,14 +61,14 @@ public class MyJavaSoundAudioDevice extends AudioDeviceBase {
     /** @param gain 0 ~ 1 */
     public void setVolume(float gain) {
         this.gain = (float) (Math.log10(gain) * 20.0);
-Debug.println(Level.FINE, "volume: " + gain + ", " + hashCode());
+        System.out.println("volume: " + gain + ", " + hashCode());
     }
 
     /** */
     private void setLineGain() {
         FloatControl volControl = (FloatControl) source.getControl(FloatControl.Type.MASTER_GAIN);
         volControl.setValue(gain);
-Debug.println(Level.FINE, "volume: " + gain + ", " + hashCode());
+        System.out.println("volume: " + gain + ", " + hashCode());
     }
 
     @Override

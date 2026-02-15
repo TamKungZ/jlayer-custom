@@ -1,0 +1,54 @@
+@options
+@packages
+-encoding
+'UTF-8'
+-protected
+--release
+17
+-sourcepath
+'G:/Projects/Code/Java/jlayer-custom/src/main/java;G:/Projects/Code/Java/jlayer-custom/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'G:/Projects/Code/Java/jlayer-custom/target/apidocs'
+-docencoding
+'UTF-8'
+-Xdoclint:none
+-doctitle
+'JLayer Custom 1.0.2.2 API'
+-use
+-version
+-windowtitle
+'JLayer Custom 1.0.2.2 API'
+javazoom.jl.converter
+javazoom.jl.decoder
+javazoom.jl.player.advanced
+javazoom.jl.player
+G:\Projects\Code\Java\jlayer-custom\src\main\java = 1771109931069
+G:\Projects\Code\Java\jlayer-custom\target\generated-sources\annotations = 1771160024857
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\allclasses-index.html = 1771160031227
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\allpackages-index.html = 1771160031230
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\constant-values.html = 1771160030932
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\copy.svg = 1771160031294
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\deprecated-list.html = 1771160031194
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\element-list = 1771160030870
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\help-doc.html = 1771160031286
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\index-all.html = 1771160031275
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\index.html = 1771160031197
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\link.svg = 1771160031297
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\member-search-index.js = 1771160031239
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\module-search-index.js = 1771160031232
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\overview-summary.html = 1771160031281
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\overview-tree.html = 1771160031190
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\package-search-index.js = 1771160031234
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\script.js = 1771160031292
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\search-page.js = 1771160031303
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\search.html = 1771160031278
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\search.js = 1771160031300
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\serialized-form.html = 1771160030949
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\stylesheet.css = 1771160031289
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\tag-search-index.js = 1771160031241
+G:\Projects\Code\Java\jlayer-custom\target\apidocs\type-search-index.js = 1771160031235
