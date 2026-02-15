@@ -1,7 +1,7 @@
 # JLayer - TamKungZ_ Custom Fork
 
-[![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/tamkungz/jlayer-rhythm)
-[![Status](https://img.shields.io/badge/Status-Stable-success)](https://github.com/tamkungz/jlayer-rhythm)
+[![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/TamKungZ/jlayer-custom)
+[![Status](https://img.shields.io/badge/Status-Stable-success)](https://repo1.maven.org/maven2/io/github/tamkungz/jlayer-custom/1.0.2.2/)
 [![License](https://img.shields.io/badge/License-LGPL-blue)](LICENSE.txt)
 [![JitPack](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
 
