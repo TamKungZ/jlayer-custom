@@ -1,4 +1,4 @@
-# JLayer - TamKungZ_ Custom Fork (v1.0.2.2)
+# JLayer - TamKungZ_ Custom Fork
 
 [![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/tamkungz/jlayer-rhythm)
 [![Status](https://img.shields.io/badge/Status-Stable-success)](https://github.com/tamkungz/jlayer-rhythm)
