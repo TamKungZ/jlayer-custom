@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="javazoom.jl.decoder.BitstreamTest" time="0.018" tests="4" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="javazoom.jl.decoder.BitstreamTest" time="0.02" tests="4" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -17,7 +17,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="US"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Amazon Corretto\jdk21.0.7_6\bin"/>
-    <property name="sun.java.command" value="C:\Users\USRE\AppData\Local\Temp\surefire6791973908358643818\surefirebooter-20260215063737340_3.jar C:\Users\USRE\AppData\Local\Temp\surefire6791973908358643818 2569-02-15T06-37-37_191-jvmRun1 surefire-20260215063737340_1tmp surefire_0-20260215063737340_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\USRE\AppData\Local\Temp\surefire349291253678019083\surefirebooter-20260215072330182_3.jar C:\Users\USRE\AppData\Local\Temp\surefire349291253678019083 2569-02-15T07-23-30_027-jvmRun1 surefire-20260215072330182_1tmp surefire_0-20260215072330182_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes;g:\Projects\Code\Java\jlayer-custom\target\classes;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-api\6.0.1\junit-jupiter-api-6.0.1.jar;C:\Users\USRE\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\USRE\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\USRE\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\USRE\.m2\repository\org\junit\jupiter\junit-jupiter-engine\6.0.1\junit-jupiter-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-engine\6.0.1\junit-platform-engine-6.0.1.jar;C:\Users\USRE\.m2\repository\org\junit\platform\junit-platform-commons\6.0.1\junit-platform-commons-6.0.1.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-commons\1.1.16\vavi-commons-1.1.16.jar;C:\Users\USRE\.m2\repository\com\github\umjammer\vavi-commons\vavi-instrumentation\1.1.16\vavi-instrumentation-1.1.16.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -32,7 +32,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\USRE\AppData\Local\Temp\surefire6791973908358643818\surefirebooter-20260215063737340_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\USRE\AppData\Local\Temp\surefire349291253678019083\surefirebooter-20260215072330182_3.jar"/>
     <property name="user.script" value=""/>
     <property name="java.util.logging.config.file" value="g:\Projects\Code\Java\jlayer-custom\target\test-classes/logging.properties"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
@@ -72,7 +72,7 @@
 ]]></system-out>
   </testcase>
   <testcase name="testBitstreamState" classname="javazoom.jl.decoder.BitstreamTest" time="0.003"/>
-  <testcase name="testHeaderParsing" classname="javazoom.jl.decoder.BitstreamTest" time="0.004">
+  <testcase name="testHeaderParsing" classname="javazoom.jl.decoder.BitstreamTest" time="0.005">
     <system-out><![CDATA[=== MP3 File Properties ===
 File: src/test/resources/c-major-scale _test_audacity.mp3
 ID3v2 size: 0 bytes

@@ -5,7 +5,20 @@
 [![License](https://img.shields.io/badge/License-LGPL-blue)](LICENSE.txt)
 [![JitPack](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
 
-<img alt="mp3 logo" src="https://github.com/umjammer/mp3spi/assets/493908/b718b78d-15c6-4356-a5ca-fca63ad7ffcb" width=160 />
+<div style="position: relative;">
+
+  <img alt="mp3 logo small"
+       src="https://github.com/umjammer/mp3spi/assets/493908/b718b78d-15c6-4356-a5ca-fca63ad7ffcb"
+       width="60"
+       align="right" />
+
+  <div align="center">
+    <img alt="main logo"
+         src="https://tamkungz.github.io/image/jlayer-custom.png"
+         width="220" />
+  </div>
+
+</div>
 
 MP3 Decoder in pure Java - **Enhanced for reliable playback in Minecraft mods**
 
@@ -13,7 +26,7 @@ MP3 Decoder in pure Java - **Enhanced for reliable playback in Minecraft mods**
 
 ---
 
-## 🔧 What's Fixed
+## What's Fixed
 
 ### Critical Bug: ArrayIndexOutOfBoundsException
 ```
@@ -43,7 +56,7 @@ if (wordPointer >= maxWords)
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Gradle (via JitPack)
 ```gradle
@@ -85,7 +98,7 @@ dependencies {
 
 ---
 
-## ✨ Enhancements
+## Enhancements
 
 ### 1. Robust Bounds Checking
 - Input parameter validation (`number_of_bits <= 0`)
@@ -105,7 +118,7 @@ dependencies {
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Tested with **254+ diverse MP3 files**:
 - ✅ CBR: 128kbps, 192kbps, 320kbps
@@ -119,13 +132,13 @@ Tested with **254+ diverse MP3 files**:
 
 ---
 
-## 📄 License
+## License
 
 LGPL (same as original JLayer)
 
 ---
 
-## 🙏 Credits
+## Credits
 
 - **Original**: [JavaZOOM](https://web.archive.org/web/20210108055829/http://www.javazoom.net/javalayer/javalayer.html) (1999-2008)
 - **Parent Fork**: [umjammer/jlayer](https://github.com/umjammer/jlayer) - Java 17 modernization
@@ -134,7 +147,7 @@ LGPL (same as original JLayer)
 ---
 
 <details>
-<summary><h2>📚 Original README (Click to expand)</h2></summary>
+<summary><h2>Original README (Click to expand)</h2></summary>
 
 ## DESCRIPTION
 
