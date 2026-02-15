@@ -6,3 +6,8 @@ playerapplet.html
 setEnvAnt.bat
 doc
 tmp/
+target/
+*.class
+*.log
+.idea/
+.vscode/
