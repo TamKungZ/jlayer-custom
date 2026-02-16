@@ -150,24 +150,28 @@ class LayerIDecoder implements FrameDecoder {
      * </ul>
      */
     protected void createSubbands() {
-        if (mode == Header.SINGLE_CHANNEL) {
-            // Mono mode
-            for (int i = 0; i < num_subbands; ++i) {
-                subbands[i] = new SubbandLayer1(i);
+        switch (mode) {
+            case Header.SINGLE_CHANNEL -> {
+                // Mono mode
+                for (int i = 0; i < num_subbands; ++i) {
+                    subbands[i] = new SubbandLayer1(i);
+                }
             }
-        } else if (mode == Header.JOINT_STEREO) {
-            // Joint stereo: normal stereo up to bound, then intensity stereo
-            int bound = header.intensityStereoBound();
-            for (int i = 0; i < bound; ++i) {
-                subbands[i] = new SubbandLayer1Stereo(i);
+            case Header.JOINT_STEREO -> {
+                // Joint stereo: normal stereo up to bound, then intensity stereo
+                int bound = header.intensityStereoBound();
+                for (int i = 0; i < bound; ++i) {
+                    subbands[i] = new SubbandLayer1Stereo(i);
+                }
+                for (int i = bound; i < num_subbands; ++i) {
+                    subbands[i] = new SubbandLayer1IntensityStereo(i);
+                }
             }
-            for (int i = bound; i < num_subbands; ++i) {
-                subbands[i] = new SubbandLayer1IntensityStereo(i);
-            }
-        } else {
-            // Normal stereo or dual channel
-            for (int i = 0; i < num_subbands; ++i) {
-                subbands[i] = new SubbandLayer1Stereo(i);
+            default -> {
+                // Normal stereo or dual channel
+                for (int i = 0; i < num_subbands; ++i) {
+                    subbands[i] = new SubbandLayer1Stereo(i);
+                }
             }
         }
     }
@@ -182,7 +186,7 @@ class LayerIDecoder implements FrameDecoder {
      */
     protected void readAllocation() throws DecoderException {
         for (int i = 0; i < num_subbands; ++i) {
-            subbands[i].readAllocation(stream, header, crc);
+            subbands[i].readAllocation(stream, header, null);
         }
     }
 
@@ -409,10 +413,6 @@ class LayerIDecoder implements FrameDecoder {
                     .withContext("subband", subbandNumber)
                     .withContext("allocation", allocation);
             }
-
-            if (crc != null) {
-                crc.addBits(allocation, 4);
-            }
             
             if (allocation != 0) {
                 sampleLength = allocation + 1;
@@ -500,19 +500,22 @@ class LayerIDecoder implements FrameDecoder {
                 // Dequantize once
                 float dequantized = sample * factor + offset;
                 
-                if (channels == OutputChannels.BOTH_CHANNELS) {
-                    // Scale separately for each channel
-                    float sample1 = dequantized * scaleFactor;
-                    float sample2 = dequantized * channel2ScaleFactor;
-                    filter1.inputSample(sample1, subbandNumber);
-                    filter2.inputSample(sample2, subbandNumber);
-                } else if (channels == OutputChannels.LEFT_CHANNEL) {
-                    float sample1 = dequantized * scaleFactor;
-                    filter1.inputSample(sample1, subbandNumber);
-                } else {
-                    // RIGHT_CHANNEL
-                    float sample2 = dequantized * channel2ScaleFactor;
-                    filter1.inputSample(sample2, subbandNumber);
+                switch (channels) {
+                    case OutputChannels.BOTH_CHANNELS -> {
+                        // Scale separately for each channel
+                        float sample1 = dequantized * scaleFactor;
+                        float sample2 = dequantized * channel2ScaleFactor;
+                        filter1.inputSample(sample1, subbandNumber);
+                        filter2.inputSample(sample2, subbandNumber);
+                    }
+                    case OutputChannels.LEFT_CHANNEL -> {
+                        float sample1 = dequantized * scaleFactor;
+                        filter1.inputSample(sample1, subbandNumber);
+                    }
+                    case OutputChannels.RIGHT_CHANNEL -> {
+                        float sample2 = dequantized * channel2ScaleFactor;
+                        filter1.inputSample(sample2, subbandNumber);
+                    }
                 }
             }
             return true;
@@ -557,11 +560,6 @@ class LayerIDecoder implements FrameDecoder {
             // Read allocations for both channels
             allocation = stream.getBits(4);
             channel2Allocation = stream.getBits(4);
-            
-            if (crc != null) {
-                crc.addBits(allocation, 4);
-                crc.addBits(channel2Allocation, 4);
-            }
             
             // Setup left channel
             if (allocation != 0) {

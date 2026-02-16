@@ -65,4 +65,51 @@ public interface BitstreamErrors extends JavaLayerErrors {
      *
      */
     int BITSTREAM_LAST = 0x1ff;
+
+    /**
+     * Additional, backward-compatible error codes for finer-grained
+     * diagnostics. Values continue after existing codes to preserve
+     * compatibility with existing callers.
+     */
+    int BUFFER_OVERFLOW = BITSTREAM_ERROR + 6;
+    int INVALID_SYNC = BITSTREAM_ERROR + 7;
+    int ID3V2_ERROR = BITSTREAM_ERROR + 8;
+    int CRC_MISMATCH = BITSTREAM_ERROR + 9;
+
+    /**
+     * Return a human-readable message for a given bitstream error code.
+     * This is a convenience helper to avoid duplicating error text across
+     * callers. The method is static so existing implementations of this
+     * interface are unaffected (backwards compatible).
+     *
+     * @param errorCode the bitstream error code
+     * @return a short, human readable message describing the error
+     * @since 1.0.5
+     */
+    static String getErrorMessage(int errorCode) {
+        return switch (errorCode) {
+            case UNKNOWN_ERROR -> "Undeterminable bitstream error";
+            case UNKNOWN_SAMPLE_RATE -> "Unknown sample rate in header";
+            case STREAM_ERROR -> "I/O error while reading the stream";
+            case UNEXPECTED_EOF -> "Unexpected end of stream";
+            case STREAM_EOF -> "End of stream reached";
+            case INVALIDFRAME -> "Invalid or incomplete frame data";
+            case BUFFER_OVERFLOW -> "Frame buffer overflow";
+            case INVALID_SYNC -> "Invalid sync word found";
+            case ID3V2_ERROR -> "ID3v2 tag parsing error";
+            case CRC_MISMATCH -> "Frame CRC mismatch";
+            default -> "Bitstream errorCode 0x" + Integer.toHexString(errorCode);
+        };
+    }
+
+    /**
+     * Check whether the given code is part of the bitstream error range.
+     *
+     * @param code error code to check
+     * @return true if the code belongs to the BitstreamErrors range
+     * @since 1.0.5
+     */
+    static boolean isBitstreamError(int code) {
+        return code >= BITSTREAM_ERROR && code <= BITSTREAM_LAST;
+    }
 }

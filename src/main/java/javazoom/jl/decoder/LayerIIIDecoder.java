@@ -41,7 +41,7 @@ package javazoom.jl.decoder;
  */
 final class LayerIIIDecoder implements FrameDecoder {
 
-    static final double d43 = (4.0 / 3.0);
+    static final double FOUR_THIRDS = (4.0 / 3.0);
 
     public int[] scaleFacBuffer;
 
@@ -63,6 +63,19 @@ final class LayerIIIDecoder implements FrameDecoder {
 
     private final Temporaire2[] III_scalefac_t;
     private final Temporaire2[] scalefac;
+
+    // Precomputed index lookup tables to avoid repeated division/mod in hot loops
+    private final int[] ss_div;
+    private final int[] ss_mod;
+    private final int[] sb_div18;
+    private final int[] sb_mod18;
+
+    /**
+     * Expose last Huffman checksum (read-only) for diagnostics / testing.
+     */
+    public int getCheckSumHuff() {
+        return checkSumHuff;
+    }
 
     private final int maxGr;
     private int frameStart;
@@ -191,6 +204,18 @@ final class LayerIIIDecoder implements FrameDecoder {
                 prevBlock[ch][j] = 0.0f;
 
         nonzero[0] = nonzero[1] = 576;
+
+        // initialize fast lookup tables for index math that is hot in the decoder
+        ss_div = new int[576];
+        ss_mod = new int[576];
+        sb_div18 = new int[576];
+        sb_mod18 = new int[576];
+        for (int i = 0; i < 576; i++) {
+            ss_div[i] = i / SSLIMIT;
+            ss_mod[i] = i % SSLIMIT;
+            sb_div18[i] = i / 18;
+            sb_mod18[i] = i % 18;
+        }
 
         br = new BitReserve();
         si = new III_SideInfo();
@@ -357,14 +382,19 @@ final class LayerIIIDecoder implements FrameDecoder {
 
                         // Set region_count parameters since they are implicit in this case.
 
-                        if (si.ch[ch].gr[gr].blockType == 0) {
-                            // Side info bad: blockType == 0 in split block
-                            return false;
-                        } else if (si.ch[ch].gr[gr].blockType == 2
-                                && si.ch[ch].gr[gr].mixedBlockFlag == 0) {
-                            si.ch[ch].gr[gr].region0Count = 8;
-                        } else {
-                            si.ch[ch].gr[gr].region0Count = 7;
+                        switch (si.ch[ch].gr[gr].blockType) {
+                            case 0:
+                                // Side info bad: blockType == 0 in split block
+                                return false;
+                            case 2:
+                                if (si.ch[ch].gr[gr].mixedBlockFlag == 0) {
+                                    si.ch[ch].gr[gr].region0Count = 8;
+                                    break;
+                                }
+                                // fall through to default if mixedBlockFlag != 0
+                            default:
+                                si.ch[ch].gr[gr].region0Count = 7;
+                                break;
                         }
                         si.ch[ch].gr[gr].region1Count = 20 - si.ch[ch].gr[gr].region0Count;
                     } else {
@@ -562,12 +592,11 @@ final class LayerIIIDecoder implements FrameDecoder {
         scalefacComp = grInfo.scalefacCompress;
 
         if (grInfo.blockType == 2) {
-            if (grInfo.mixedBlockFlag == 0)
-                blockTypeNumber = 1;
-            else if (grInfo.mixedBlockFlag == 1)
-                blockTypeNumber = 2;
-            else
-                blockTypeNumber = 0;
+            blockTypeNumber = switch (grInfo.mixedBlockFlag) {
+                case 0 -> 1;
+                case 1 -> 2;
+                default -> 0;
+            };
         } else {
             blockTypeNumber = 0;
         }
@@ -630,8 +659,8 @@ final class LayerIIIDecoder implements FrameDecoder {
             }
         }
 
-        for (int x = 0; x < 45; x++) // why 45, not 54?
-            scaleFacBuffer[x] = 0;
+        for (int i = 0; i < 45; i++) // why 45, not 54?
+            scaleFacBuffer[i] = 0;
 
         m = 0;
         for (int i = 0; i < 4; i++) {
@@ -850,11 +879,11 @@ final class LayerIIIDecoder implements FrameDecoder {
                     if (is1d[j] > 0) xr_1d[quotien][reste] = g_gain * t_43[abv];
                     else {
                         if (-abv < t_43.length) xr_1d[quotien][reste] = -g_gain * t_43[-abv];
-                        else xr_1d[quotien][reste] = -g_gain * (float) Math.pow(-abv, d43);
+                        else xr_1d[quotien][reste] = -g_gain * (float) Math.pow(-abv, FOUR_THIRDS);
                     }
                 } else {
-                    if (is1d[j] > 0) xr_1d[quotien][reste] = g_gain * (float) Math.pow(abv, d43);
-                    else xr_1d[quotien][reste] = -g_gain * (float) Math.pow(-abv, d43);
+                    if (is1d[j] > 0) xr_1d[quotien][reste] = g_gain * (float) Math.pow(abv, FOUR_THIRDS);
+                    else xr_1d[quotien][reste] = -g_gain * (float) Math.pow(-abv, FOUR_THIRDS);
                 }
             }
         }
@@ -1299,6 +1328,7 @@ final class LayerIIIDecoder implements FrameDecoder {
                         }
                     }
                     i++;
+                    if (i >= 576) break; // safety guard for malformed side-info / scalefactor data
                 }
         } // channels == 2
     }
@@ -1430,8 +1460,7 @@ final class LayerIIIDecoder implements FrameDecoder {
         float tmpf_0, tmpf_1, tmpf_2, tmpf_3, tmpf_4, tmpf_5, tmpf_6, tmpf_7, tmpf_8, tmpf_9;
         float tmpf_10, tmpf_11, tmpf_12, tmpf_13, tmpf_14, tmpf_15, tmpf_16, tmpf_17;
 
-        tmpf_0 = tmpf_1 = tmpf_2 = tmpf_3 = tmpf_4 = tmpf_5 = tmpf_6 = tmpf_7 = tmpf_8 = tmpf_9 =
-                tmpf_10 = tmpf_11 = tmpf_12 = tmpf_13 = tmpf_14 = tmpf_15 = tmpf_16 = tmpf_17 = 0.0f;
+        // tmpf_* variables are initialized where they're used; no need for a redundant zero here.
 
         if (block_type == 2) {
 

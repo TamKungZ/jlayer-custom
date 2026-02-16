@@ -138,7 +138,7 @@ public class jlc {
             System.exit(0);
             
         } catch (JavaLayerException ex) {
-            logger.warning("Conversion failure: " + ex);
+            logger.warning(() -> "Conversion failure: " + ex.getMessage());
             System.err.println("ERROR: " + ex.getMessage());
             System.exit(1);
         }
@@ -299,7 +299,7 @@ public class jlc {
                 if (outputDirectory != null) {
                     try {
                         Files.createDirectories(Paths.get(outputDirectory));
-                    } catch (Exception e) {
+                    } catch (java.io.IOException | SecurityException e) {
                         System.err.println("ERROR: Cannot create output directory: " + e.getMessage());
                         return false;
                     }

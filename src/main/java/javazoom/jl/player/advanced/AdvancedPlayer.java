@@ -43,11 +43,6 @@ public class AdvancedPlayer {
     private Decoder decoder;
     /** The AudioDevice the audio samples are written to. */
     private AudioDevice audio;
-    /** Has the player been closed? */
-    private boolean closed = false;
-    /** Has the player played back all frames from the stream? */
-    private boolean complete = false;
-    private int lastPosition = 0;
     /** Listener for the playback process */
     private PlaybackListener listener;
 
@@ -92,7 +87,6 @@ public class AdvancedPlayer {
         if (out != null) {
             out.flush();
             synchronized (this) {
-                complete = (!closed);
                 close();
             }
 
@@ -110,12 +104,10 @@ public class AdvancedPlayer {
     public synchronized void close() {
         AudioDevice out = audio;
         if (out != null) {
-            closed = true;
             audio = null;
             // this may fail, so ensure object state is set up before
             // calling this method.
             out.close();
-            lastPosition = out.getPosition();
             try {
                 bitstream.close();
             } catch (BitstreamException ex) {

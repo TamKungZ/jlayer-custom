@@ -32,22 +32,26 @@ package javazoom.jl.decoder;
 /**
  * Implements decoding of MPEG Audio Layer II frames.
  */
-class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
+class LayerIIDecoder extends LayerIDecoder {
 
     @Override
     protected void createSubbands() {
         int i;
-        if (mode == Header.SINGLE_CHANNEL)
-            for (i = 0; i < num_subbands; ++i)
-                subbands[i] = new SubbandLayer2(i);
-        else if (mode == Header.JOINT_STEREO) {
-            for (i = 0; i < header.intensityStereoBound(); ++i)
-                subbands[i] = new SubbandLayer2Stereo(i);
-            for (; i < num_subbands; ++i)
-                subbands[i] = new SubbandLayer2IntensityStereo(i);
-        } else {
-            for (i = 0; i < num_subbands; ++i)
-                subbands[i] = new SubbandLayer2Stereo(i);
+        switch (mode) {
+            case Header.SINGLE_CHANNEL -> {
+                for (i = 0; i < num_subbands; ++i)
+                    subbands[i] = new SubbandLayer2(i);
+            }
+            case Header.JOINT_STEREO -> {
+                for (i = 0; i < header.intensityStereoBound(); ++i)
+                    subbands[i] = new SubbandLayer2Stereo(i);
+                for (; i < num_subbands; ++i)
+                    subbands[i] = new SubbandLayer2IntensityStereo(i);
+            }
+            default -> {
+                for (i = 0; i < num_subbands; ++i)
+                    subbands[i] = new SubbandLayer2Stereo(i);
+            }
         }
     }
 
@@ -153,33 +157,6 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
                 -8.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f,
                 -2.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, 0.0f, 8.0f / 9.0f, -8.0f / 9.0f, 2.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f,
                 4.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, 6.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, 8.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f,
-                -8.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f, 0.0f, -8.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 0.0f, -6.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, 0.0f, -4.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 0.0f, -2.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, 0.0f, -6.0f / 9.0f, -6.0f / 9.0f, 0.0f, -6.0f / 9.0f, -4.0f / 9.0f, 0.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, 0.0f, -6.0f / 9.0f, 0.0f, 0.0f, -6.0f / 9.0f, 2.0f / 9.0f, 0.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, 0.0f, -6.0f / 9.0f, 6.0f / 9.0f, 0.0f, -6.0f / 9.0f, 8.0f / 9.0f, 0.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, 0.0f, 2.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f, 0.0f, 4.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, 4.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, 0.0f, 6.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f,
-                -8.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f,
-                -2.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, 0.0f, 8.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f,
-                4.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f,
                 -8.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f, -4.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f,
                 -2.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f, 0.0f, -8.0f / 9.0f, -4.0f / 9.0f, 2.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f,
                 4.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f, 6.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, -4.0f / 9.0f,
@@ -207,33 +184,6 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
                 -8.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, -4.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f,
                 -2.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, 0.0f, 8.0f / 9.0f, -4.0f / 9.0f, 2.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f,
                 4.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, 6.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, 8.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f,
-                -8.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f, 0.0f, -8.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, -8.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, 0.0f, -6.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, 0.0f, -4.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f, 0.0f, -2.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, 0.0f, -2.0f / 9.0f, -6.0f / 9.0f, 0.0f, -2.0f / 9.0f, -4.0f / 9.0f, 0.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, 0.0f, -2.0f / 9.0f, 0.0f, 0.0f, -2.0f / 9.0f, 2.0f / 9.0f, 0.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, 0.0f, -2.0f / 9.0f, 6.0f / 9.0f, 0.0f, -2.0f / 9.0f, 8.0f / 9.0f, 0.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, 0.0f, 2.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, 2.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f, 0.0f, 4.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, 4.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, 0.0f, 6.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, 6.0f / 9.0f, -2.0f / 9.0f,
-                -8.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, -6.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, -4.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f,
-                -2.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, 0.0f, 8.0f / 9.0f, -2.0f / 9.0f, 2.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f,
-                4.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, 6.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f, 8.0f / 9.0f, 8.0f / 9.0f, -2.0f / 9.0f,
                 -8.0f / 9.0f, -8.0f / 9.0f, 0.0f, -6.0f / 9.0f, -8.0f / 9.0f, 0.0f, -4.0f / 9.0f, -8.0f / 9.0f, 0.0f,
                 -2.0f / 9.0f, -8.0f / 9.0f, 0.0f, 0.0f, -8.0f / 9.0f, 0.0f, 2.0f / 9.0f, -8.0f / 9.0f, 0.0f,
                 4.0f / 9.0f, -8.0f / 9.0f, 0.0f, 6.0f / 9.0f, -8.0f / 9.0f, 0.0f, 8.0f / 9.0f, -8.0f / 9.0f, 0.0f,
@@ -444,12 +394,16 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
                 0.0f, 1.0f / 2.0f, 1.0f / 4.0f, 1.0f / 4.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 16.0f, 1.0f / 32768.0f
         };
         public static final float[] table_ab3_c = {
-                0.0f, 1.33333333333f, 1.60000000000f, 1.14285714286f, 1.77777777777f,
-                1.06666666666f, 1.03225806452f, 1.00001525902f
+                0.0f, 1.33333333333f, 1.60000000000f, 1.77777777777f, 1.06666666666f,
+                1.03225806452f, 1.01587301587f, 1.00787401575f, 1.00392156863f, 1.00195694716f,
+                1.00097751711f, 1.00048851979f, 1.00024420024f, 1.00012208522f, 1.00001525902f,
+                1.00000762951f
         };
         public static final float[] table_ab3_d = {
-                0.0f, 0.50000000000f, 0.50000000000f, 0.25000000000f, 0.50000000000f,
-                0.12500000000f, 0.06250000000f, 0.00003051758f
+                0.0f, 0.50000000000f, 0.50000000000f, 0.50000000000f, 0.12500000000f,
+                0.06250000000f, 0.03125000000f, 0.01562500000f, 0.00781250000f, 0.00390625000f,
+                0.00195312500f, 0.00097656250f, 0.00048828125f, 0.00024414063f, 0.00012207031f,
+                0.00006103516f
         };
 
         // subbands 23-... in tables 3-B.2a and 2b:
@@ -474,8 +428,8 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
         public static final float[] table_cd_c = {
                 0.0f, 1.33333333333f, 1.60000000000f, 1.77777777777f, 1.06666666666f,
                 1.03225806452f, 1.01587301587f, 1.00787401575f, 1.00392156863f, 1.00195694716f,
-                1.00097751711f, 1.00048851979f, 1.00024420024f, 1.00012208522f, 1.00006103888f,
-                1.00003051851f
+                1.00097751711f, 1.00048851979f, 1.00024420024f, 1.00012208522f, 1.00001525902f,
+                1.00000762951f
         };
         public static final float[] table_cd_d = {
                 0.0f, 0.50000000000f, 0.50000000000f, 0.50000000000f, 0.12500000000f,
@@ -503,6 +457,20 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
         public SubbandLayer2(int subbandNumber) {
             this.subbandNumber = subbandNumber;
             groupNumber = sampleNumber = 0;
+        }
+
+        /**
+         * Helper to safely copy 3 grouped samples from a grouping table into
+         * the target array. Bounds-checked to avoid array-index issues.
+         */
+        protected static void copyGroupedSamples(float[] source, int index, float[] target) {
+            // ensure index is within [0, source.length-3]
+            int safeIndex = index;
+            if (safeIndex < 0) safeIndex = 0;
+            if (safeIndex > source.length - 3) safeIndex = source.length - 3;
+            target[0] = source[safeIndex];
+            target[1] = source[safeIndex + 1];
+            target[2] = source[safeIndex + 2];
         }
 
         /**
@@ -606,7 +574,7 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             int length = getAllocationLength(header);
             allocation = stream.getBits(length);
             if (crc != null)
-                crc.addBits(allocation, length);
+                crc.update(allocation, length);
         }
 
         /**
@@ -615,7 +583,7 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
         public void readScaleFactorSelection(Bitstream stream, Crc16 crc) {
             if (allocation != 0) {
                 scfsi = stream.getBits(2);
-                if (crc != null) crc.addBits(scfsi, 2);
+                if (crc != null) crc.update(scfsi, 2);
             }
         }
 
@@ -626,22 +594,21 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
         public void readScaleFactor(Bitstream stream, Header header) {
             if (allocation != 0) {
                 switch (scfsi) {
-                case 0:
-                    scaleFactor1 = scaleFactors[stream.getBits(6)];
-                    scaleFactor2 = scaleFactors[stream.getBits(6)];
-                    scaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
-                case 1:
-                    scaleFactor1 = scaleFactor2 = scaleFactors[stream.getBits(6)];
-                    scaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
-                case 2:
-                    scaleFactor1 = scaleFactor2 = scaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
-                case 3:
-                    scaleFactor1 = scaleFactors[stream.getBits(6)];
-                    scaleFactor2 = scaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                    case 0 -> {
+                        scaleFactor1 = scaleFactors[stream.getBits(6)];
+                        scaleFactor2 = scaleFactors[stream.getBits(6)];
+                        scaleFactor3 = scaleFactors[stream.getBits(6)];
+                    }
+                    case 1 -> {
+                        scaleFactor1 = scaleFactor2 = scaleFactors[stream.getBits(6)];
+                        scaleFactor3 = scaleFactors[stream.getBits(6)];
+                    }
+                    case 2 ->
+                        scaleFactor1 = scaleFactor2 = scaleFactor3 = scaleFactors[stream.getBits(6)];
+                    case 3 -> {
+                        scaleFactor1 = scaleFactors[stream.getBits(6)];
+                        scaleFactor2 = scaleFactor3 = scaleFactors[stream.getBits(6)];
+                    }
                 }
                 prepare_sample_reading(header, allocation, 0, factor, codeLength, c, d);
             }
@@ -655,25 +622,9 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             if (allocation != 0)
                 if (groupingTable[0] != null) {
                     int samplecode = stream.getBits(codeLength[0]);
-                    // create requantized samples:
-                    samplecode += samplecode << 1;
-                    float[] target = samples;
-                    float[] source = groupingTable[0];
-                    //Bugfix:
-                    int tmp = 0;
-                    int temp = samplecode;
-
-                    if (temp > source.length - 3) temp = source.length - 3;
-
-                    target[tmp] = source[temp];
-                    temp++;
-                    tmp++;
-                    target[tmp] = source[temp];
-                    temp++;
-                    tmp++;
-                    target[tmp] = source[temp];
-
-                    // memcpy (samples, groupingTable + samplecode, 3 * sizeof (real));
+                    // create requantized samples: grouped tables store 3 values per code
+                    samplecode = samplecode + (samplecode << 1);
+                    copyGroupedSamples(groupingTable[0], samplecode, samples);
                 } else {
                     samples[0] = (float) ((stream.getBits(codeLength[0])) * factor[0] - 1.0);
                     samples[1] = (float) ((stream.getBits(codeLength[0])) * factor[0] - 1.0);
@@ -739,8 +690,8 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
                 scfsi = stream.getBits(2);
                 channel2Scfsi = stream.getBits(2);
                 if (crc != null) {
-                    crc.addBits(scfsi, 2);
-                    crc.addBits(channel2Scfsi, 2);
+                    crc.update(scfsi, 2);
+                    crc.update(channel2Scfsi, 2);
                 }
             }
         }
@@ -753,26 +704,26 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             if (allocation != 0) {
                 super.readScaleFactor(stream, header);
                 switch (channel2Scfsi) {
-                case 0:
+                case 0 -> {
                     channel2ScaleFactor1 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor2 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
 
-                case 1:
+                case 1 -> {
                     channel2ScaleFactor1 = channel2ScaleFactor2 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
 
-                case 2:
+                case 2 -> {
                     channel2ScaleFactor1 = channel2ScaleFactor2 =
                             channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
 
-                case 3:
+                case 3 -> {
                     channel2ScaleFactor1 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor2 = channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
                 }
             }
         }
@@ -795,36 +746,40 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
 
                 if (groupingTable[0] == null)
                     sample = (sample + d[0]) * c[0];
-                if (channels == OutputChannels.BOTH_CHANNELS) {
-                    float sample2 = sample;
-                    if (groupNumber <= 4) {
-                        sample *= scaleFactor1;
-                        sample2 *= channel2ScaleFactor1;
-                    } else if (groupNumber <= 8) {
-                        sample *= scaleFactor2;
-                        sample2 *= channel2ScaleFactor2;
-                    } else {
-                        sample *= scaleFactor3;
-                        sample2 *= channel2ScaleFactor3;
+                switch (channels) {
+                    case OutputChannels.BOTH_CHANNELS -> {
+                        float sample2 = sample;
+                        if (groupNumber <= 4) {
+                            sample *= scaleFactor1;
+                            sample2 *= channel2ScaleFactor1;
+                        } else if (groupNumber <= 8) {
+                            sample *= scaleFactor2;
+                            sample2 *= channel2ScaleFactor2;
+                        } else {
+                            sample *= scaleFactor3;
+                            sample2 *= channel2ScaleFactor3;
+                        }
+                        filter1.inputSample(sample, subbandNumber);
+                        filter2.inputSample(sample2, subbandNumber);
                     }
-                    filter1.inputSample(sample, subbandNumber);
-                    filter2.inputSample(sample2, subbandNumber);
-                } else if (channels == OutputChannels.LEFT_CHANNEL) {
-                    if (groupNumber <= 4)
-                        sample *= scaleFactor1;
-                    else if (groupNumber <= 8)
-                        sample *= scaleFactor2;
-                    else
-                        sample *= scaleFactor3;
-                    filter1.inputSample(sample, subbandNumber);
-                } else {
-                    if (groupNumber <= 4)
-                        sample *= channel2ScaleFactor1;
-                    else if (groupNumber <= 8)
-                        sample *= channel2ScaleFactor2;
-                    else
-                        sample *= channel2ScaleFactor3;
-                    filter1.inputSample(sample, subbandNumber);
+                    case OutputChannels.LEFT_CHANNEL -> {
+                        if (groupNumber <= 4)
+                            sample *= scaleFactor1;
+                        else if (groupNumber <= 8)
+                            sample *= scaleFactor2;
+                        else
+                            sample *= scaleFactor3;
+                        filter1.inputSample(sample, subbandNumber);
+                    }
+                    default -> {
+                        if (groupNumber <= 4)
+                            sample *= channel2ScaleFactor1;
+                        else if (groupNumber <= 8)
+                            sample *= channel2ScaleFactor2;
+                        else
+                            sample *= channel2ScaleFactor3;
+                        filter1.inputSample(sample, subbandNumber);
+                    }
                 }
             }
 
@@ -864,8 +819,8 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             allocation = stream.getBits(length);
             channel2Allocation = stream.getBits(length);
             if (crc != null) {
-                crc.addBits(allocation, length);
-                crc.addBits(channel2Allocation, length);
+                crc.update(allocation, length);
+                crc.update(channel2Allocation, length);
             }
         }
 
@@ -877,12 +832,12 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             if (allocation != 0) {
                 scfsi = stream.getBits(2);
                 if (crc != null)
-                    crc.addBits(scfsi, 2);
+                    crc.update(scfsi, 2);
             }
             if (channel2Allocation != 0) {
                 channel2Scfsi = stream.getBits(2);
                 if (crc != null)
-                    crc.addBits(channel2Scfsi, 2);
+                    crc.update(channel2Scfsi, 2);
             }
         }
 
@@ -894,28 +849,28 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             super.readScaleFactor(stream, header);
             if (channel2Allocation != 0) {
                 switch (channel2Scfsi) {
-                case 0:
+                case 0 -> {
                     channel2ScaleFactor1 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor2 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
 
-                case 1:
+                case 1 -> {
                     channel2ScaleFactor1 = channel2ScaleFactor2 =
                             scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
 
-                case 2:
+                case 2 -> {
                     channel2ScaleFactor1 = channel2ScaleFactor2 =
                             channel2ScaleFactor3 = scaleFactors[stream.getBits(6)];
-                    break;
+                }
 
-                case 3:
+                case 3 -> {
                     channel2ScaleFactor1 = scaleFactors[stream.getBits(6)];
                     channel2ScaleFactor2 = channel2ScaleFactor3 =
                             scaleFactors[stream.getBits(6)];
-                    break;
+                }
                 }
                 prepare_sample_reading(header, channel2Allocation, 1,
                         channel2Factor, channel2CodeLength, channel2C,
@@ -933,20 +888,9 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder {
             if (channel2Allocation != 0)
                 if (groupingTable[1] != null) {
                     int sampleCode = stream.getBits(channel2CodeLength[0]);
-                    // create requantized samples:
-                    sampleCode += sampleCode << 1;
-                    float[] target = channel2Samples;
-                    float[] source = groupingTable[1];
-                    int tmp = 0;
-                    int temp = sampleCode;
-                    target[tmp] = source[temp];
-                    temp++;
-                    tmp++;
-                    target[tmp] = source[temp];
-                    temp++;
-                    tmp++;
-                    target[tmp] = source[temp];
-
+                    // create requantized samples: grouped tables store 3 values per code
+                    sampleCode = sampleCode + (sampleCode << 1);
+                    copyGroupedSamples(groupingTable[1], sampleCode, channel2Samples);
                 } else {
                     channel2Samples[0] = (float) ((stream.getBits(channel2CodeLength[0])) *
                             channel2Factor[0] - 1.0);

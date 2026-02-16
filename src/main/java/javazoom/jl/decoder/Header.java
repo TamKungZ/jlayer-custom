@@ -169,7 +169,6 @@ public final class Header {
      */
     void read_header(Bitstream stream, Crc16[] crcp) throws BitstreamException {
         int headerString;
-        int channelBitrate;
         boolean sync = false;
         
         do {
@@ -214,7 +213,7 @@ public final class Header {
             h_original = ((headerString >>> 2) & 1) == 1;
             
             // Calculate number of subbands
-            calculateNumberOfSubbands(channelBitrate = calculateChannelBitrate());
+            calculateNumberOfSubbands(calculateChannelBitrate());
             
             if (hIntensityStereoBound > hNumberOfSubbands) {
                 hIntensityStereoBound = hNumberOfSubbands;
@@ -249,7 +248,13 @@ public final class Header {
             if (crc == null) {
                 crc = new Crc16();
             }
-            crc.addBits(headerString, 16);
+            byte[] headerBytes = new byte[]{
+                    (byte) ((headerString >>> 24) & 0xFF),
+                    (byte) ((headerString >>> 16) & 0xFF),
+                    (byte) ((headerString >>> 8) & 0xFF),
+                    (byte) (headerString & 0xFF)
+            };
+            crc.update(headerBytes, 0, 2);
             crcp[0] = crc;
         } else {
             crcp[0] = null;
