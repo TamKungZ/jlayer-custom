@@ -120,6 +120,14 @@ dependencies {
 }
 ```
 
+### Version Notes
+
+> 1.0.2.x
+The 1.0.2.* line only fixes issues present in the original JLayer implementation. There are no feature changes or behavioral modifications. If your project previously used JLayer (2010–2024), this version is recommended for maximum compatibility.
+
+>1.0.5+
+Version 1.0.5 introduces multiple internal changes focused on performance improvements. While execution efficiency is improved, some legacy code relying on the old JLayer behavior may no longer function without modification.
+
 ---
 
 ## Enhancements
