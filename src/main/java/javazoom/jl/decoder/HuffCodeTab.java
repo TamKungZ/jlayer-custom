@@ -57,27 +57,27 @@ final class HuffCodeTab {
     private char tablename2 = ' ';
 
     /** max. x-index+ */
-    private int xlen;
+    private final int xlen;
     /** max. y-index+ */
-    private int ylen;
+    private final int ylen;
     /** number of linbits */
-    private int linbits;
+    private final int linbits;
     /** max number to be stored in linbits */
     @SuppressWarnings("unused")
-    private int linmax;
+    private final int linmax;
     /** a positive value indicates a reference */
     @SuppressWarnings("unused")
-    private int ref;
+    private final int ref;
     /** pointer to array[xlen][ylen] */
     @SuppressWarnings("unused")
-    private int[] table = null;
+    private final int[] table;
     /** pointer to array[xlen][ylen] */
     @SuppressWarnings("unused")
-    private int[] hlen = null;
+    private final int[] hlen;
     /** decoder tree */
-    private int[][] val = null;
+    private final int[][] val;
     /** length of decoder tree */
-    private int treelen;
+    private final int treelen;
 
     private static final int[][] ValTab0 = {
             {0, 0} // dummy
@@ -436,7 +436,7 @@ final class HuffCodeTab {
     public static HuffCodeTab[] ht = null;
 
     @SuppressWarnings("unused")
-    private static int[] bitbuf = new int[32];
+    private static final int[] bitbuf = new int[32];
 
     /**
      * Big Constructor : Computes all Huffman Tables.

@@ -503,11 +503,11 @@ public class DecoderException extends JavaLayerException implements DecoderError
             DecoderException ex = new DecoderException(message, cause, errorCode);
             
             if (frameNumber != null) {
-                ex.withFrameNumber(frameNumber);
+                ex = ex.withFrameNumber(frameNumber);
             }
             
             if (streamPosition != null) {
-                ex.withStreamPosition(streamPosition);
+                ex = ex.withStreamPosition(streamPosition);
             }
             
             context.forEach(ex::withContext);

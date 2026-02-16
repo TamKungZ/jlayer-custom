@@ -97,7 +97,15 @@ public class WaveFile extends RiffFile {
 
         public ChunkData() {
             wFormatTag = WAVE_FORMAT_PCM;
-            config(SAMPLE_RATE_CD, BITS_PER_SAMPLE_16, CHANNELS_MONO);
+            initializeDefaults();
+        }
+
+        private void initializeDefaults() {
+            nSamplesPerSec = SAMPLE_RATE_CD;
+            nChannels = CHANNELS_MONO;
+            nBitsPerSample = BITS_PER_SAMPLE_16;
+            nAvgBytesPerSec = (nChannels * nSamplesPerSec * nBitsPerSample) / 8;
+            nBlockAlign = (short) ((nChannels * nBitsPerSample) / 8);
         }
 
         public void config(int newSamplingRate, short newBitsPerSample, short newNumChannels) {
@@ -170,8 +178,8 @@ public class WaveFile extends RiffFile {
         }
     }
 
-    private Chunk waveFormat;
-    private RiffChunkHeader pcmData;
+    private final Chunk waveFormat;
+    private final RiffChunkHeader pcmData;
     private long pcmDataOffset = 0;  // offset of 'pcmData' in output file
     private int numSamples = 0;
     private long totalBytesWritten = 0;
@@ -307,9 +315,7 @@ public class WaveFile extends RiffFile {
         }
         
         short[] data = new short[waveFormat.data.nChannels];
-        for (int i = 0; i < waveFormat.data.nChannels; i++) {
-            data[i] = sample.chan[i];
-        }
+        System.arraycopy(sample.chan, 0, data, 0, waveFormat.data.nChannels);
         
         return writeData(data, waveFormat.data.nChannels);
     }
@@ -320,6 +326,7 @@ public class WaveFile extends RiffFile {
      * @deprecated Use {@link #close()} instead for AutoCloseable compatibility
      */
     @Deprecated
+    @Override
     public int closeWithReturnCode() {
         int rc = DDC_SUCCESS;
 

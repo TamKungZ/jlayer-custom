@@ -20,6 +20,8 @@
 
 package javazoom.jl.decoder;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InvalidClassException;
@@ -28,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -49,13 +52,27 @@ public class JavaLayerUtils {
     static public Object deserialize(InputStream in, Class<?> cls) throws IOException {
         if (cls == null)
             throw new NullPointerException("cls");
-
-        Object obj = deserialize(in, cls);
+        /*
+         * Previously this method erroneously delegated to itself causing
+         * infinite recursion. Delegate to the single-argument
+         * deserialize(InputStream) and validate the result instead.
+         */
+        Object obj = deserialize(in);
         if (!cls.isInstance(obj)) {
             throw new InvalidObjectException("type of deserialized instance not of required class.");
         }
 
         return obj;
+    }
+
+    /**
+     * Typed convenience wrapper around {@link #deserialize(InputStream, Class)}.
+     * Returns the object already cast to the requested type.
+     * This method is additive and preserved for source convenience only.
+     */
+    static public <T> T deserializeAs(InputStream in, Class<T> cls) throws IOException {
+        Object obj = deserialize(in, cls);
+        return cls.cast(obj);
     }
 
     /**
@@ -74,11 +91,9 @@ public class JavaLayerUtils {
     static public Object deserialize(InputStream in) throws IOException {
         if (in == null)
             throw new NullPointerException("in");
-
         ObjectInputStream objIn = new ObjectInputStream(in);
 
         Object obj;
-
         try {
             obj = objIn.readObject();
         } catch (ClassNotFoundException ex) {
@@ -125,14 +140,62 @@ public class JavaLayerUtils {
         return obj;
     }
 
+    /**
+     * Convenience: serialize an object to a byte array.
+     */
+    static public byte[] serializeToBytes(Object obj) throws IOException {
+        if (obj == null)
+            throw new NullPointerException("obj");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream objOut = new ObjectOutputStream(baos);
+        objOut.writeObject(obj);
+        objOut.flush();
+        return baos.toByteArray();
+    }
+
+    /**
+     * Convenience: deserialize an object from a byte array.
+     */
+    static public Object deserializeFromBytes(byte[] data) throws IOException {
+        if (data == null)
+            throw new NullPointerException("data");
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        return deserialize(bais);
+    }
+
     static public Object deserializeArrayResource(String name, Class<?> elemType, int length) throws IOException {
         InputStream str = getResourceAsStream(name);
         if (str == null)
             throw new IOException("unable to load resource '" + name + "'");
 
-        Object obj = deserializeArray(str, elemType, length);
+        return deserializeArray(str, elemType, length);
+    }
 
-        return obj;
+    /**
+     * Load the named resource and return its raw bytes, or null if not found.
+     */
+    static public byte[] getResourceAsBytes(String name) throws IOException {
+        InputStream is = getResourceAsStream(name);
+        if (is == null)
+            return null;
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int r;
+        while ((r = is.read(buf)) != -1) {
+            baos.write(buf, 0, r);
+        }
+        return baos.toByteArray();
+    }
+
+    /**
+     * Load the named resource as a UTF-8 string. Returns null if resource not found.
+     */
+    static public String getResourceAsString(String name) throws IOException {
+        byte[] data = getResourceAsBytes(name);
+        return data == null ? null : new String(data, StandardCharsets.UTF_8);
     }
 
     static public void serialize(OutputStream out, Object obj)
@@ -169,7 +232,7 @@ public class JavaLayerUtils {
      * to retrieve the resource.
      */
     static synchronized public InputStream getResourceAsStream(String name) {
-        InputStream is = null;
+        InputStream is;
 
         if (hook != null) {
             is = hook.getResourceAsStream(name);

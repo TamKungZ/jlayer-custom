@@ -123,6 +123,7 @@ final class SynthesisFilter {
     /**
      * Compute new values via a fast cosine transform.
      */
+    @SuppressWarnings("unused")
     private void computeNewV() {
         // p is fully initialized from x1
         //float[] p = _p;

@@ -62,7 +62,7 @@ public class JavaLayerException extends Exception {
         if (this.exception == null) {
             super.printStackTrace(ps);
         } else {
-            exception.printStackTrace();
+            exception.printStackTrace(ps);
         }
     }
 }

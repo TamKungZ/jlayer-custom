@@ -55,7 +55,7 @@ public class jlp {
             jlp player = createInstance(args);
             if (player != null)
                 player.play();
-        } catch (Exception ex) {
+        } catch (JavaLayerException ex) {
             logger.log(Level.SEVERE, ex.getMessage(), ex);
             ex.printStackTrace(System.err);
             retval = 1;
@@ -77,26 +77,28 @@ public class jlp {
         init(filename);
     }
 
-    protected void init(String filename) {
+    protected final void init(String filename) {
         fFilename = filename;
     }
 
     protected boolean parseArgs(String[] args) {
         boolean parsed = false;
-        if (args.length == 1) {
-            init(args[0]);
-            parsed = true;
-            remote = false;
-        } else if (args.length == 2) {
-            if (!(args[0].equals("-url"))) {
-                showUsage();
-            } else {
-                init(args[1]);
+        switch (args.length) {
+            case 1 -> {
+                init(args[0]);
                 parsed = true;
-                remote = true;
+                remote = false;
             }
-        } else {
-            showUsage();
+            case 2 -> {
+                if (!(args[0].equals("-url"))) {
+                    showUsage();
+                } else {
+                    init(args[1]);
+                    parsed = true;
+                    remote = true;
+                }
+            }
+            default -> showUsage();
         }
         return parsed;
     }
@@ -117,7 +119,8 @@ public class jlp {
             if (remote) in = getURLInputStream();
             else in = getInputStream();
             AudioDevice dev = setAudioDevice();
-            logger.fine("audioDevice: " + dev);
+            logger.fine("audioDevice: {0}");
+            logger.log(Level.FINE, "audioDevice: {0}", dev);
             player = new Player(in, dev);
             player.play();
         } catch (Exception ex) {

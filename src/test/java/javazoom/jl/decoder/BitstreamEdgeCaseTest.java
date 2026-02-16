@@ -62,10 +62,11 @@ class BitstreamEdgeCaseTest {
         try (Bitstream bs = new Bitstream(new ByteArrayInputStream(data))) {
             // Read 32 bits from 24-bit stream
             int value = bs.getBits(32);
-            assertNotNull(Integer.valueOf(value), "Should return a value");
+            assertTrue(value >= 0, "Should return a value");
             
             // Subsequent reads should handle EOF gracefully
-            bs.getBits(8);
+            assertDoesNotThrow(() -> bs.getBits(8), 
+                    "getBits(8) should not throw");
             
             // Should eventually reach EOF
             assertTrue(bs.isEOF() || bs.getBits(1) >= 0, 
@@ -83,7 +84,7 @@ class BitstreamEdgeCaseTest {
         try (Bitstream bs = new Bitstream(new ByteArrayInputStream(empty))) {
             // Reading from empty stream should be safe
             assertDoesNotThrow(() -> {
-                int val = bs.getBits(8);
+                bs.getBits(8);
                 // May return 0 or reach EOF
             }, "Reading from empty stream should not throw");
             
