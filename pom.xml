@@ -52,7 +52,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.10.2</junit.version>
-    <gpg.keyname>440D77C330A319DE</gpg.keyname>
+    <gpg.keyname>7311416EAA9848E4</gpg.keyname>
   </properties>
 
   <dependencies>
