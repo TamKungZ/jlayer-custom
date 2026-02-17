@@ -1,39 +1,55 @@
-/*
- * 11/19/04        1.0 moved to LGPL.
- *-----------------------------------------------------------------------
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU Library General Public License as published
- *   by the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Library General Public License for more details.
- *
- *   You should have received a copy of the GNU Library General Public
- *   License along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *----------------------------------------------------------------------
- */
-
 package javazoom.jl.decoder;
 
 /**
- * Work in progress.
  * <p>
- * Manages a number of controls.
+ * Manager for {@link Control} instances.
+ * </p>
+ *
+ * <p>
+ * This class was originally marked as work in progress.
+ * It is intended to manage multiple Control objects and
+ * potentially delegate control operations to them.
+ * </p>
+ *
+ * <h2>Backward Compatibility</h2>
+ * <ul>
+ *   <li>No interface implemented (original behavior preserved)</li>
+ *   <li>No public API changes</li>
+ * </ul>
+ *
+ * @author JavaZoom
+ * @since 1.0
  */
 public class Manager /* implements Control */ {
 
+    /**
+     * Adds a control to the manager.
+     *
+     * @param c control to add
+     */
     public void addControl(Control c) {
+        // Original implementation intentionally empty.
     }
 
+    /**
+     * Removes a control from the manager.
+     *
+     * @param c control to remove
+     */
     public void removeControl(Control c) {
+        // Original implementation intentionally empty.
     }
 
+    /**
+     * Removes all managed controls.
+     */
     public void removeAll() {
+        // Original implementation intentionally empty.
     }
 
-    // control interface delegates to a managed control
+    /*
+     * Control interface delegates to a managed control.
+     *
+     * (Not implemented in original version.)
+     */
 }
