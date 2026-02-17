@@ -242,8 +242,16 @@ public class SampleBuffer extends Obuffer {
      */
     @Override
     public void append(int channel, short value) {
-        buffer[bufferP[channel]] = value;
-        bufferP[channel] += channels;
+        int pos = bufferP[channel];
+        if (pos >= OBUFFERSIZE) {
+            // Buffer full — drop samples to avoid ArrayIndexOutOfBounds
+            return;
+        }
+        buffer[pos] = value;
+        // advance write position by interleave step (channels)
+        pos += channels;
+        if (pos > OBUFFERSIZE) pos = OBUFFERSIZE; // clamp
+        bufferP[channel] = pos;
     }
 
     /**
@@ -265,21 +273,23 @@ public class SampleBuffer extends Obuffer {
         int pos = bufferP[channel];
 
         // Optimized loop: convert, clip, and store
-        // Note: Uses -32767.0f (not -32768.0f) to match original implementation
+        // Stop early if buffer is full to avoid ArrayIndexOutOfBounds
         for (int i = 0; i < 32; i++) {
+            if (pos >= OBUFFERSIZE) {
+                break;
+            }
             float fs = f[i];
-            
             // Inline clipping - matches original behavior exactly
             if (fs > 32767.0f) {
                 fs = 32767.0f;
             } else if (fs < -32767.0f) {
                 fs = -32767.0f;
             }
-            
             buffer[pos] = (short) fs;
             pos += channels;
         }
 
+        if (pos > OBUFFERSIZE) pos = OBUFFERSIZE;
         bufferP[channel] = pos;
     }
 

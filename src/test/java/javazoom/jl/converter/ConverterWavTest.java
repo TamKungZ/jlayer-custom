@@ -10,7 +10,7 @@ public class ConverterWavTest {
     @Test
     public void convertMp3ToWav() throws Exception {
         String base = "src/test/resources/";
-        String source = base + "c-major-scale _test_audacity.mp3";
+        String source = base + "c-major-scale_test_audacity.mp3";
         File out = new File("target/test-output-audacity.wav");
         if (out.exists()) out.delete();
 

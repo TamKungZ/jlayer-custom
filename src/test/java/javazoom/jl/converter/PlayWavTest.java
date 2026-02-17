@@ -14,7 +14,7 @@ public class PlayWavTest {
 
     @Test
     public void playAbletonWav() throws Exception {
-        File wav = new File("src/test/resources/c-major-scale _test_ableton-live.wav");
+        File wav = new File("src/test/resources/c-major-scale_test_ableton-live.wav");
         Assumptions.assumeTrue(wav.exists(), "Test WAV file not present, skipping playback test");
 
         try (AudioInputStream ais = AudioSystem.getAudioInputStream(wav)) {
