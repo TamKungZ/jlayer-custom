@@ -1,6 +1,7 @@
 package javazoom.jl.modern.advanced;
 
 import java.io.BufferedInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -96,20 +97,6 @@ public final class AdvancedPlayer implements AutoCloseable {
         return new FilterInputStream(delegate) {
             @Override public void close() { /* intentionally empty */ }
         };
-    }
-
-    // Tiny helper so we don't need a separate file
-    private static class FilterInputStream extends InputStream {
-        private final InputStream in;
-        FilterInputStream(InputStream in) { this.in = in; }
-        @Override public int read() throws IOException { return in.read(); }
-        @Override public int read(byte[] b, int off, int len) throws IOException { return in.read(b, off, len); }
-        @Override public long skip(long n) throws IOException { return in.skip(n); }
-        @Override public int available() throws IOException { return in.available(); }
-        @Override public void mark(int limit) { in.mark(limit); }
-        @Override public void reset() throws IOException { in.reset(); }
-        @Override public boolean markSupported() { return in.markSupported(); }
-        @Override public void close() { /* intentionally empty */ }
     }
 
     // ---------- Builder ----------

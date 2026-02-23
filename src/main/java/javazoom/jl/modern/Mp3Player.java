@@ -7,13 +7,18 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.sound.sampled.AudioFormat;
+
+import javazoom.jl.decoder.Decoder;
 import javazoom.jl.decoder.Equalizer;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.decoder.OutputChannels;
 import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.FactoryRegistry;
+import javazoom.jl.player.JavaSoundAudioDevice;
 
 /**
  * Modern, easy‑to‑use MP3 player with playback control.
@@ -50,26 +55,35 @@ public final class Mp3Player implements AutoCloseable {
 
     private final Mp3Decoder decoder;
     private final AudioDevice audioDevice;
-    private final Thread playbackThread;
+    private volatile Thread playbackThread;
+    private final Path sourcePath;
     private final AtomicBoolean stopRequested = new AtomicBoolean(false);
     private final Object pauseLock = new Object();
     private volatile State state = State.STOPPED;
     private volatile Listener listener;
     private volatile Throwable lastError;
+    private volatile Mp3Info cachedInfo;
+    private volatile boolean playbackStarted;
+    private volatile boolean playbackFinished;
 
     // Builder
     private Mp3Player(Builder builder) throws IOException {
         this.decoder = builder.decoderBuilder.build(builder.inputStream);
         this.audioDevice = builder.audioDevice;
+        this.sourcePath = builder.sourcePath;
+        createPlaybackThread(builder.daemon);
+    }
 
-        this.playbackThread = new Thread(this::runPlayback, "Mp3Player");
-        this.playbackThread.setDaemon(builder.daemon);
+    private void createPlaybackThread(boolean daemon) {
+        Thread t = new Thread(this::runPlayback, "Mp3Player");
+        t.setDaemon(daemon);
+        this.playbackThread = t;
     }
 
     // ---------- Builder ----------
 
     public static Builder fromPath(Path path) throws IOException {
-        return new Builder(Files.newInputStream(path));
+        return new Builder(Files.newInputStream(path), path);
     }
 
     public static Builder fromFile(String fileName) throws IOException {
@@ -77,18 +91,20 @@ public final class Mp3Player implements AutoCloseable {
     }
 
     public static Builder fromStream(InputStream inputStream) {
-        return new Builder(inputStream);
+        return new Builder(inputStream, null);
     }
 
     public static final class Builder {
         private final InputStream inputStream;
+        private final Path sourcePath;
         private final Mp3Decoder.Builder decoderBuilder = Mp3Decoder.builder();
         private AudioDevice audioDevice;
         private boolean daemon = true;
         private Listener listener;
 
-        private Builder(InputStream inputStream) {
+        private Builder(InputStream inputStream, Path sourcePath) {
             this.inputStream = Objects.requireNonNull(inputStream, "inputStream must not be null");
+            this.sourcePath = sourcePath;
         }
 
         /** Set output channels (e.g., stereo, mono). */
@@ -151,7 +167,11 @@ public final class Mp3Player implements AutoCloseable {
                 return;
             }
             if (state == State.STOPPED) {
+                if (playbackFinished || (playbackStarted && !playbackThread.isAlive())) {
+                    throw new IllegalStateException("Mp3Player is single-use after stop/completion; create a new player instance");
+                }
                 stopRequested.set(false);
+                playbackStarted = true;
                 playbackThread.start();
                 changeState(State.PLAYING);
             } else if (state == State.PAUSED) {
@@ -177,7 +197,13 @@ public final class Mp3Player implements AutoCloseable {
         }
     }
 
-    /** Stops playback and resets position to beginning (if supported). */
+    /**
+     * Stops playback.
+     * <p>
+     * This player is single-use: after stop/completion, playback cannot be restarted
+     * on the same instance. Create a new {@code Mp3Player} to play again.
+     * </p>
+     */
     public void stop() {
         synchronized (pauseLock) {
             if (state == State.PLAYING || state == State.PAUSED) {
@@ -187,11 +213,14 @@ public final class Mp3Player implements AutoCloseable {
                 }
                 try {
                     playbackThread.join(1000);
-                } catch (InterruptedException ignored) {
+                    if (playbackThread.isAlive()) {
+                        playbackThread.interrupt();
+                        playbackThread.join(1000);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
                 changeState(State.STOPPED);
-                // Optionally close decoder? Not yet, because we may want to restart.
-                // For now, we leave decoder open; but we can't rewind, so restarting is limited.
             }
         }
     }
@@ -230,6 +259,23 @@ public final class Mp3Player implements AutoCloseable {
 
     /** Returns metadata about the MP3 stream (blocks until first frame is read). */
     public Mp3Info getInfo() {
+        if (cachedInfo != null) {
+            return cachedInfo;
+        }
+
+        if (sourcePath != null) {
+            synchronized (this) {
+                if (cachedInfo == null) {
+                    try (Mp3Decoder infoDecoder = Mp3Decoder.fromPath(sourcePath)) {
+                        cachedInfo = infoDecoder.getInfo();
+                    } catch (IOException e) {
+                        throw new Mp3PlayerException("Failed to probe MP3 info", e);
+                    }
+                }
+            }
+            return cachedInfo;
+        }
+
         return decoder.getInfo();
     }
 
@@ -265,6 +311,7 @@ public final class Mp3Player implements AutoCloseable {
                     // Should not happen, but safety
                     continue;
                 }
+                ensureAudioDeviceOpen(frame);
                 // Write samples to audio device
                 short[] samples = frame.getSamples();
                 audioDevice.write(samples, 0, frame.getSampleCount());
@@ -273,16 +320,21 @@ public final class Mp3Player implements AutoCloseable {
                 }
             }
             // End of stream
-            audioDevice.flush();
-            if (listener != null) {
+            if (audioDevice.isOpen()) {
+                audioDevice.flush();
+            }
+            if (!stopRequested.get() && listener != null) {
                 listener.onPlaybackFinished();
             }
-        } catch (JavaLayerException e) {
+        } catch (Exception e) {
             lastError = e;
             if (listener != null) {
                 listener.onError(e);
             }
+        } catch (Error e) {
+            throw e;
         } finally {
+            playbackFinished = true;
             // Ensure device is closed if not already
             if (audioDevice != null && audioDevice.isOpen()) {
                 audioDevice.close();
@@ -291,6 +343,38 @@ public final class Mp3Player implements AutoCloseable {
                 changeState(State.STOPPED);
             }
         }
+    }
+
+    private void ensureAudioDeviceOpen(Mp3Frame frame) {
+        if (audioDevice.isOpen()) {
+            return;
+        }
+        try {
+            if (audioDevice instanceof JavaSoundAudioDevice jsAudioDevice) {
+                AudioFormat format = new AudioFormat(frame.getSampleRate(), 16, frame.getChannels(), true, false);
+                jsAudioDevice.open(format);
+            } else {
+                audioDevice.open(createFormatAwareDecoder(frame));
+            }
+        } catch (JavaLayerException e) {
+            throw new Mp3PlayerException("Failed to open audio device", e);
+        }
+    }
+
+    private Decoder createFormatAwareDecoder(Mp3Frame frame) {
+        final int sampleRate = frame.getSampleRate();
+        final int channels = frame.getChannels();
+        return new Decoder() {
+            @Override
+            public int getOutputFrequency() {
+                return sampleRate;
+            }
+
+            @Override
+            public int getOutputChannels() {
+                return channels;
+            }
+        };
     }
 
     private void changeState(State newState) {
@@ -330,11 +414,18 @@ public final class Mp3Player implements AutoCloseable {
             playbackThread.join();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new Mp3PlayerException("Interrupted while waiting for playback", e);
+        }
+        if (lastError != null) {
+            if (lastError instanceof RuntimeException re) {
+                throw re;
+            }
+            throw new Mp3PlayerException("Playback failed", lastError);
         }
     }
 
     public CompletableFuture<Void> playAsync() {
-        return CompletableFuture.runAsync(this::playAndWait);
+        return CompletableFuture.runAsync(this::playAndWait, ForkJoinPool.commonPool());
     }
 
     public CompletableFuture<Void> playAsync(Executor executor) {

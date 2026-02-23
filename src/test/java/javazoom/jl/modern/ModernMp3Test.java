@@ -58,17 +58,10 @@ import javazoom.jl.player.advanced.PlaybackEvent;
  *   filename=your-test-file.mp3
  * </pre>
  *
- * <h2>Known Limitation – {@code getInfo()} + frame iteration on the same instance</h2>
- * <p>{@link Mp3Decoder#getInfo()} calls {@code Decoder.decodeFrame()} internally and
- * leaves the shared {@link javazoom.jl.decoder.Decoder} with half-filled
- * {@code SynthesisFilter} ring-buffers. Calling the iterator / forEach / stream on
- * the <em>same</em> decoder instance afterwards overflows {@code SampleBuffer}
- * (AOOBE at index 2304). All tests that decode frames use a <em>fresh</em>
- * {@code Mp3Decoder} that has never had {@code getInfo()} called on it.</p>
- *
- * <p>The same rule applies to {@link Mp3Player}: never call {@code player.getInfo()}
- * on a player that is also used for playback — each call goes to the same internal
- * decoder and corrupts its synthesis state.</p>
+ * <h2>Modern API behavior</h2>
+ * <p>{@link Mp3Decoder#getInfo()} is metadata-only and no longer corrupts decoder
+ * iteration state for path-backed decoders. The same instance can be used for
+ * info + decoding in sequence.</p>
  */
 @DisplayName("Modern JLayer API Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -176,7 +169,7 @@ class ModernMp3Test {
             }
         }
 
-        // --- getInfo() — use a dedicated instance; never mix with iteration ---
+        // --- getInfo() ---
 
         @Test @Order(10)
         @DisplayName("getInfo() returns non-null Mp3Info")
@@ -211,21 +204,17 @@ class ModernMp3Test {
             }
         }
 
-        /**
-         * Documents the known corruption: {@code getInfo()} leaves the internal
-         * {@code Decoder} in a dirty state (advanced SynthesisFilter ring-buffers),
-         * causing {@code ArrayIndexOutOfBoundsException} when any iteration is then
-         * attempted on the <em>same</em> instance.
-         */
         @Test @Order(14)
-        @DisplayName("getInfo() then iterate on SAME decoder throws (known limitation)")
-        void getInfoThenIterateSameDecoderThrows() throws Exception {
+        @DisplayName("getInfo() then iterate on SAME decoder works")
+        void getInfoThenIterateSameDecoderWorks() throws Exception {
             try (Mp3Decoder d = Mp3Decoder.fromPath(testMp3Path)) {
-                d.getInfo(); // corrupts internal SynthesisFilter ring-buffer state
-                assertThrows(RuntimeException.class, () -> {
-                    //noinspection StatementWithEmptyBody
-                    for (Mp3Frame frame : d) { /* throws on first or second frame */ }
-                }, "Iterating after getInfo() on the same decoder must throw");
+                assertNotNull(d.getInfo());
+                int count = 0;
+                for (Mp3Frame frame : d) {
+                    assertNotNull(frame);
+                    if (++count >= 5) break;
+                }
+                assertTrue(count > 0, "Iterating after getInfo() on the same decoder must succeed");
             }
         }
 
@@ -245,7 +234,7 @@ class ModernMp3Test {
             assertTrue(count > 0, "Fresh decoder must decode frames");
         }
 
-        // --- Iteration (always use a fresh decoder that never called getInfo()) ---
+        // --- Iteration ---
 
         @Test @Order(20)
         @DisplayName("iterator() reports hasNext() on a non-empty file")
@@ -491,20 +480,23 @@ class ModernMp3Test {
         }
 
         /**
-         * Verifies getInfo() on a player that is NEVER played.
-         * Calling getInfo() corrupts the internal decoder, so this player
-         * must never be used for playback — just built, queried, and closed.
+         * Verifies getInfo() on a player that is still usable for playback.
          */
         @Test @Order(11)
-        @DisplayName("getInfo() is available on a never-played player")
-        void getInfoNeverPlayed() throws Exception {
+        @DisplayName("getInfo() is available on a player and does not block playback")
+        void getInfoThenPlay() throws Exception {
+            CountDownLatch finished = new CountDownLatch(1);
             try (Mp3Player p = Mp3Player.fromPath(testMp3Path)
+                    .listener(new Mp3Player.Listener() {
+                        @Override public void onPlaybackFinished() { finished.countDown(); }
+                    })
                     .audioDevice(silentDevice()).build()) {
                 Mp3Info info = p.getInfo();
                 assertNotNull(info);
                 assertTrue(info.getSampleRate() > 0);
-                // Player is closed here; its corrupted decoder is discarded.
+                p.playAndWait();
             }
+            assertTrue(finished.getCount() == 0, "Playback should complete after getInfo()");
         }
 
         // --- State transitions ----------------------------------------------
@@ -691,10 +683,6 @@ class ModernMp3Test {
          * exits, then check the callback fired.  If the background thread threw instead
          * (e.g. decoder error), {@code onError} fires first and we fail with a clear message.
          *
-         * <p><b>Important:</b> this player's decoder must never have {@code getInfo()} called
-         * on it — doing so would corrupt the SynthesisFilter state and cause an AOOBE in the
-         * background thread, which is caught as an unchecked exception and NOT routed through
-         * {@code onError} (since {@code runPlayback} only catches {@code JavaLayerException}).
          */
         @Test @Order(32)
         @DisplayName("onPlaybackFinished fires when stream ends naturally")
@@ -787,12 +775,10 @@ class ModernMp3Test {
         @Test @Order(61)
         @DisplayName("try-with-resources closes player cleanly")
         void tryWithResources() {
-            // Note: getInfo() corrupts the decoder — this player must never be played.
-            // The test only verifies that close() (called by try-with-resources) works.
             assertDoesNotThrow(() -> {
                 try (Mp3Player p = Mp3Player.fromPath(testMp3Path)
                         .audioDevice(silentDevice()).build()) {
-                    // just build and close — no play, no getInfo
+                    p.getInfo();
                 }
             });
         }
@@ -1132,9 +1118,6 @@ class ModernMp3Test {
         /**
          * Decodes the full file with both {@link Mp3Decoder} (direct) and
          * {@link Mp3Player} (via {@code onFramePlayed}) and checks frame counts match.
-         *
-         * <p>Neither instance calls {@code getInfo()}, ensuring the decoder's
-         * {@code SynthesisFilter} is never corrupted.</p>
          *
          * <p>{@code playAndWait()} blocks until the background thread exits fully,
          * so there is no race between thread teardown and try-with-resources.</p>

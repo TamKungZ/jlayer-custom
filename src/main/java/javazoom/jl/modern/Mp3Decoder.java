@@ -1,5 +1,6 @@
 package javazoom.jl.modern;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,13 +65,25 @@ import javazoom.jl.decoder.SampleBuffer;
  */
 public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
 
+    private static final class OpenedPathSource {
+        private final InputStream in;
+        private final long size;
+
+        private OpenedPathSource(InputStream in, long size) {
+            this.in = in;
+            this.size = size;
+        }
+    }
+
     private final Bitstream bitstream;
+    private final Path sourcePath;
     private final long streamSize; // bytes, may be -1 if unknown
+    private final Object iterationLock = new Object();
+
     private boolean closed = false;
-    private boolean firstFrameRead = false;
     private Mp3Info cachedInfo = null;
     private long frameNumber = 0;
-    private boolean infoQueried = false;
+    private boolean iterationStarted = false;
 
     private final Decoder.Params params;
     private final Obuffer builderOutputBuffer;
@@ -78,17 +91,38 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
 
     // ---------- Constructors ----------
 
-    private Mp3Decoder(InputStream in, Builder builder) {
+    private Mp3Decoder(InputStream in, Path sourcePath, long streamSize, Builder builder) {
         Objects.requireNonNull(in, "InputStream must not be null");
-        this.bitstream = new Bitstream(in);
+
+        InputStream normalized = in;
+        if (!normalized.markSupported()) {
+            normalized = new BufferedInputStream(normalized);
+        }
+
+        this.bitstream = new Bitstream(normalized);
+        this.sourcePath = sourcePath;
+        this.streamSize = streamSize;
         this.params = builder.params;
         this.builderOutputBuffer = builder.outputBuffer;
         this.builderEventListener = builder.eventListener;
-        this.streamSize = -1;
+    }
+
+    private Mp3Decoder(InputStream in, Builder builder) {
+        this(in, null, -1, builder);
     }
 
     private Mp3Decoder(Path path, Builder builder) throws IOException {
-        this(Files.newInputStream(path), builder);
+        this(openPathSource(path), path, builder);
+    }
+
+    private Mp3Decoder(OpenedPathSource source, Path sourcePath, Builder builder) {
+        this(source.in, sourcePath, source.size, builder);
+    }
+
+    private static OpenedPathSource openPathSource(Path path) throws IOException {
+        long size = Files.size(path);
+        InputStream in = Files.newInputStream(path);
+        return new OpenedPathSource(in, size);
     }
 
     /**
@@ -184,28 +218,40 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
      */
     public Mp3Info getInfo() {
         ensureOpen();
-        infoQueried = true;
         if (cachedInfo == null) {
-            // We need to read first frame without consuming it permanently.
-            // We'll read, decode, then reset? But we cannot rewind the stream easily.
-            // Instead, we'll read the first frame, decode it (to get header info),
-            // and then "unread" the frame data via bitstream.unreadFrame().
-            // However, unreadFrame() only works if we haven't called closeFrame().
+            // If this decoder was created from a path, read metadata from a dedicated
+            // stream so getInfo() never affects frame iteration state.
+            if (sourcePath != null) {
+                try (InputStream in = Files.newInputStream(sourcePath)) {
+                    Bitstream probe = new Bitstream(in);
+                    Header h = probe.readFrame();
+                    if (h == null) {
+                        throw new Mp3Exception("Empty stream – no frame found");
+                    }
+                    cachedInfo = new Mp3Info(h, streamSize);
+                    probe.close();
+                } catch (IOException | BitstreamException e) {
+                    throw new Mp3Exception("Failed to read stream info", e);
+                }
+                return cachedInfo;
+            }
+
+            // Stream-based decoder: read + unread frame from the same Bitstream.
+            // This is safe only before iteration has started.
+            if (iterationStarted) {
+                throw new IllegalStateException(
+                        "getInfo() on stream-backed decoders must be called before iteration starts");
+            }
             try {
                 Header h = bitstream.readFrame();
                 if (h == null) {
                     throw new Mp3Exception("Empty stream – no frame found");
                 }
-
-                // Decode the frame to populate the decoder's internal state, which may be needed for accurate info (e.g. VBR bitrate).
-                cachedInfo = new Mp3Info(h, streamSize);
-
-                // Push the frame bytes back so the stream can be iterated later.
+                cachedInfo = new Mp3Info(h, -1);
                 bitstream.unreadFrame();
             } catch (BitstreamException e) {
                 throw new Mp3Exception("Failed to read stream info", e);
             }
-
         }
 
         return cachedInfo;
@@ -214,8 +260,11 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
     @Override
     public Iterator<Mp3Frame> iterator() {
         ensureOpen();
-        if (infoQueried) {
-            throw new RuntimeException("Mp3Decoder.getInfo() invalidates the decoder; create a new instance to iterate");
+        synchronized (iterationLock) {
+            if (iterationStarted) {
+                throw new IllegalStateException("Mp3Decoder is single-pass: create a new instance for a second iteration");
+            }
+            iterationStarted = true;
         }
         return new Mp3Iterator();
     }
@@ -360,7 +409,7 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
                 decoder.setEventListener(builderEventListener);
             }
 
-            advance();   // ← ต้องอยู่ใน class
+            advance();
         }
 
         private void advance() {
