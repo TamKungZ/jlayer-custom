@@ -59,13 +59,17 @@ public final class AdvancedPlayer implements AutoCloseable {
             // Wrap in a non-closing proxy so Bitstream.close() cannot close `is`.
             InputStream probeStream = nonClosingWrapper(is);
             Bitstream tempBitstream = new Bitstream(probeStream);
-            Header firstHeader = tempBitstream.readFrame();
-            if (firstHeader == null) {
-                throw new IOException("No MPEG frames found in stream");
+            try {
+                Header firstHeader = tempBitstream.readFrame();
+                if (firstHeader == null) {
+                    throw new IOException("No MPEG frames found in stream");
+                }
+                this.info = new Mp3Info(firstHeader, streamSize);
+            } finally {
+                // Close Bitstream resources while keeping the underlying stream open
+                // (probeStream's close() is intentionally a no-op).
+                tempBitstream.close();
             }
-            this.info = new Mp3Info(firstHeader, streamSize);
-            // Do NOT call tempBitstream.close() – the non-closing wrapper ensures
-            // the underlying stream stays open, and we reset it below.
         } finally {
             is.reset(); // rewind to the very start
         }
@@ -231,8 +235,8 @@ public final class AdvancedPlayer implements AutoCloseable {
     @Override
     public synchronized void close() {
         if (!closed) {
-            closed = true;
             stop();
+            closed = true;
             try {
                 if (playThread.isAlive()) {
                     // Wait longer for the playback thread to finish.
