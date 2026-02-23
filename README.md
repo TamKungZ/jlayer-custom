@@ -272,5 +272,5 @@ See `javazoom.jl.player.advanced.jlap` source to learn how to skip frames.
 ## JAVA and MP3 online Forums
 
 [http://www.javazoom.net/services/forums/index.jsp](https://web.archive.org/web/20041010053627/http://www.javazoom.net/services/forums/index.jsp)
-
+ 
 </details>
