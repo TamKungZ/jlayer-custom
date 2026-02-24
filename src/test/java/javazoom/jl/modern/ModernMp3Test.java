@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -278,6 +280,59 @@ class ModernMp3Test {
                     prev = f.getFrameNumber();
                     if (++n >= 5) break;
                 }
+            }
+        }
+
+        @Test @Order(23)
+        @DisplayName("decodeNextFrame() yields frames then eventually EOF null")
+        void decodeNextFrameWorks() throws Exception {
+            try (Mp3Decoder d = Mp3Decoder.fromPath(testMp3Path)) {
+                Mp3Frame first = d.decodeNextFrame();
+                assertNotNull(first);
+                assertTrue(first.getSampleCount() > 0);
+
+                Mp3Frame second = d.decodeNextFrame();
+                assertNotNull(second);
+                assertTrue(second.getFrameNumber() > first.getFrameNumber());
+
+                Mp3Frame f;
+                do {
+                    f = d.decodeNextFrame();
+                } while (f != null);
+
+                assertNull(d.decodeNextFrame());
+            }
+        }
+
+        @Test @Order(23)
+        @DisplayName("decodeUpTo() returns bounded batches")
+        void decodeUpToWorks() throws Exception {
+            try (Mp3Decoder d = Mp3Decoder.fromPath(testMp3Path)) {
+                List<Mp3Frame> batch = d.decodeUpTo(3);
+                assertEquals(3, batch.size());
+                assertTrue(batch.get(0).getFrameNumber() < batch.get(1).getFrameNumber());
+
+                List<Mp3Frame> nextBatch = d.decodeUpTo(2);
+                assertEquals(2, nextBatch.size());
+                assertTrue(nextBatch.get(0).getFrameNumber() > batch.get(2).getFrameNumber());
+            }
+        }
+
+        @Test @Order(23)
+        @DisplayName("decodeUpTo(0) throws IllegalArgumentException")
+        void decodeUpToRejectsNonPositive() throws Exception {
+            try (Mp3Decoder d = Mp3Decoder.fromPath(testMp3Path)) {
+                assertThrows(IllegalArgumentException.class, () -> d.decodeUpTo(0));
+            }
+        }
+
+        @Test @Order(23)
+        @DisplayName("iterator() then decodeNextFrame() is rejected (single-pass ownership)")
+        void iteratorThenDecodeNextFrameRejected() throws Exception {
+            try (Mp3Decoder d = Mp3Decoder.fromPath(testMp3Path)) {
+                Iterator<Mp3Frame> it = d.iterator();
+                assertTrue(it.hasNext());
+                assertThrows(IllegalStateException.class, d::decodeNextFrame);
             }
         }
 

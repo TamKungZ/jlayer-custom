@@ -84,6 +84,7 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
     private Mp3Info cachedInfo = null;
     private long frameNumber = 0;
     private boolean iterationStarted = false;
+    private Mp3Iterator incrementalIterator = null;
 
     private final Decoder.Params params;
     private final Obuffer builderOutputBuffer;
@@ -288,6 +289,61 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
             lazy, Spliterator.ORDERED | Spliterator.NONNULL);
         return StreamSupport.stream(spliterator, false)
                 .onClose(this::close);
+    }
+
+    /**
+     * Decodes and returns exactly one next frame from the stream.
+     * <p>
+     * This pull-based API is fully backward-compatible and additive. It uses the
+     * same single-pass decoder state as {@link #iterator()}.
+     * </p>
+     *
+     * @return next decoded frame, or {@code null} if end-of-stream is reached
+     * @throws IllegalStateException if another iteration API already owns the decode pass
+     * @since 1.1.3
+     */
+    public Mp3Frame decodeNextFrame() {
+        ensureOpen();
+        synchronized (iterationLock) {
+            if (!iterationStarted) {
+                iterationStarted = true;
+                incrementalIterator = new Mp3Iterator();
+            }
+
+            if (incrementalIterator == null) {
+                throw new IllegalStateException(
+                        "Mp3Decoder single-pass already consumed by another iteration API");
+            }
+
+            if (!incrementalIterator.hasNext()) {
+                return null;
+            }
+            return incrementalIterator.next();
+        }
+    }
+
+    /**
+     * Decodes up to {@code maxFrames} frames and returns them.
+     *
+     * @param maxFrames maximum number of frames to decode, must be &gt; 0
+     * @return decoded frames (possibly empty if end-of-stream has already been reached)
+     * @throws IllegalArgumentException if {@code maxFrames <= 0}
+     * @since 1.1.3
+     */
+    public List<Mp3Frame> decodeUpTo(int maxFrames) {
+        if (maxFrames <= 0) {
+            throw new IllegalArgumentException("maxFrames must be > 0");
+        }
+
+        List<Mp3Frame> out = new ArrayList<>(Math.min(maxFrames, 64));
+        for (int i = 0; i < maxFrames; i++) {
+            Mp3Frame frame = decodeNextFrame();
+            if (frame == null) {
+                break;
+            }
+            out.add(frame);
+        }
+        return out;
     }
 
     /**
