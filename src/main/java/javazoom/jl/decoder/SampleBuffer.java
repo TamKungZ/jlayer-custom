@@ -282,8 +282,8 @@ public class SampleBuffer extends Obuffer {
             // Inline clipping - matches original behavior exactly
             if (fs > 32767.0f) {
                 fs = 32767.0f;
-            } else if (fs < -32767.0f) {
-                fs = -32767.0f;
+            } else if (fs < -32768.0f) {
+                fs = -32768.0f;
             }
             buffer[pos] = (short) fs;
             pos += channels;

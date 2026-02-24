@@ -7,7 +7,7 @@
 
   <groupId>me.tamkungz</groupId>
   <artifactId>jlayer-custom</artifactId>
-  <version>1.1.2</version>
+  <version>1.1.3</version>
   <packaging>jar</packaging>
 
   <name>JLayer Custom</name>
@@ -16,7 +16,24 @@
     Java MP3 decoder with VBR support. Fixed JLayer bugs.
     95% success rate, API compatible.
   </description>
-  <url>https://github.com/TamKungZ/jlayer-custom</url>
+  <url>https://www.tamkungz.me/</url>
+
+  <organization>
+    <name>TamKungZ_</name>
+    <url>https://www.tamkungz.me/</url>
+  </organization>
+
+  <inceptionYear>2025</inceptionYear>
+
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/TamKungZ/jlayer-custom/issues</url>
+  </issueManagement>
+
+  <ciManagement>
+    <system>GitHub Actions</system>
+    <url>https://github.com/TamKungZ/jlayer-custom/actions</url>
+  </ciManagement>
 
   <licenses>
     <license>
@@ -31,6 +48,12 @@
       <id>tamkungz</id>
       <name>TamKungZ_</name>
       <email>kittiwut.pimpromma@gmail.com</email>
+      <roles>
+        <role>owner</role>
+        <role>developer</role>
+        <role>maintainer</role>
+      </roles>
+      <timezone>Asia/Bangkok</timezone>
     </developer>
   </developers>
 
@@ -51,6 +74,16 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.outputTimestamp>${maven.build.timestamp}</project.build.outputTimestamp>
+    <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+
+    <!-- Project web metadata -->
+    <project.website.primary>https://www.tamkungz.me/</project.website.primary>
+    <project.website.dev>https://dev.tamkungz.me/</project.website.dev>
+    <project.icon.png>https://dev.tamkungz.me/favicon.png</project.icon.png>
+    <project.icon.svg>https://dev.tamkungz.me/favicon.svg</project.icon.svg>
+    <project.icon.ico>https://dev.tamkungz.me/favicon.ico</project.icon.ico>
+
     <junit.version>5.10.2</junit.version>
     <gpg.keyname>7311416EAA9848E4</gpg.keyname>
   </properties>
@@ -82,6 +115,31 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
+      </plugin>
+
+      <!-- JAR Manifest Metadata -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+            <manifestEntries>
+              <Built-By>TamKungZ_</Built-By>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Implementation-Title>${project.name}</Implementation-Title>
+              <Project-Website>${project.website.primary}</Project-Website>
+              <Project-Website-Dev>${project.website.dev}</Project-Website-Dev>
+              <Project-Icon-PNG>${project.icon.png}</Project-Icon-PNG>
+              <Project-Icon-SVG>${project.icon.svg}</Project-Icon-SVG>
+              <Project-Icon-ICO>${project.icon.ico}</Project-Icon-ICO>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
 
       <!-- Sources -->

@@ -67,7 +67,10 @@ public class BitstreamException extends JavaLayerException implements BitstreamE
     static public String getErrorString(int errorcode) {
         // REVIEW: use resource bundle to map error codes
         // to locale-sensitive strings.
-
+        String mapped = BitstreamErrors.getErrorMessage(errorcode);
+        if (mapped != null && !mapped.isEmpty()) {
+            return mapped;
+        }
         return "Bitstream errorCode " + Integer.toHexString(errorcode);
     }
 }

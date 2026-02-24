@@ -268,8 +268,8 @@ public final class Bitstream implements BitstreamErrors, AutoCloseable {
             // int majorVersion = id3header[0];
             // int revision = id3header[1];
             in.read(id3header, 0, 4);
-            size = (id3header[0] << 21) + (id3header[1] << 14) + 
-                   (id3header[2] << 7) + (id3header[3]);
+            size = ((id3header[0] & 0x7F) << 21) + ((id3header[1] & 0x7F) << 14) +
+                   ((id3header[2] & 0x7F) << 7) + (id3header[3] & 0x7F);
         }
         return (size + 10);
     }
