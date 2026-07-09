@@ -3,7 +3,7 @@
 [![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/TamKungZ/jlayer-custom)
 [![Status](https://img.shields.io/badge/Status-Stable-success)](https://repo1.maven.org/maven2/io/github/tamkungz/jlayer-custom/1.0.2.2/)
 [![License](https://img.shields.io/badge/License-LGPL-blue)](LICENSE.txt)
-[![JitPack](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
+[![](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
 [![MvnRepository](https://badges.mvnrepository.com/badge/io.github.tamkungz/jlayer-custom/badge.svg?label=MvnRepository)](https://mvnrepository.com/artifact/io.github.tamkungz/jlayer-custom)
 
 <div style="position: relative;">
@@ -15,7 +15,7 @@
 
   <div align="center">
     <img alt="main logo"
-         src="https://tamkungz.github.io/image/jlayer-custom.png"
+         src="https://dev.tamkungz.me/assets-image/jlayer-custom-banner.jpg"
          width="220" />
   </div>
 
