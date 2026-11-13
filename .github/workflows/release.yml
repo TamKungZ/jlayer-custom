@@ -68,24 +68,21 @@ jobs:
           gpg-private-key: ${{ secrets.SIGN_GPG_PRIVATE }}
           gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
 
-      - name: Select signing key
-        id: gpg
+      - name: Verify signing key
         run: |
+          key="$(sed -n 's:.*<gpg.keyname>\(.*\)</gpg.keyname>.*:\1:p' pom.xml | head -n 1 | tr -d '\r')"
           gpg --list-secret-keys --keyid-format long
-          key="$(gpg --list-secret-keys --with-colons | awk -F: '$1 == "sec" { print $5; exit }')"
-          if [ -z "$key" ]; then
-            echo "::error::SIGN_GPG_PRIVATE does not contain a secret key. Export it with: gpg --armor --export-secret-keys <KEYID>"
+          if ! gpg --list-secret-keys "$key" > /dev/null 2>&1; then
+            echo "::error::SIGN_GPG_PRIVATE has no secret key $key (gpg.keyname in pom.xml). Export it with: gpg --armor --export-secret-keys $key"
             exit 1
           fi
-          echo "keyname=$key" >> "$GITHUB_OUTPUT"
 
       - name: Build, test, sign and deploy to Maven Central
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.SIGN_GPG_PASSPHRASE }}
-          GPG_KEYNAME: ${{ steps.gpg.outputs.keyname }}
-        run: mvn -B -ntp clean deploy -Dgpg.keyname="$GPG_KEYNAME"
+        run: mvn -B -ntp clean deploy
 
       - name: Create GitHub release
         env:

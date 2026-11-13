@@ -83,7 +83,7 @@
     <project.icon.ico>https://dev.tamkungz.me/favicon.ico</project.icon.ico>
 
     <junit.version>5.13.4</junit.version>
-    <gpg.keyname>7311416EAA9848E4</gpg.keyname>
+    <gpg.keyname>B64B156379154E5B6C176D0D6157503BFCD109A4</gpg.keyname>
   </properties>
 
   <dependencies>
