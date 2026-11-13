@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-11-13
+
+### Fixed
+- WAV files written by `WaveFile` declared a RIFF size 8 bytes too large; backpatching the data header no longer grows it.
+- `WaveFile` rejects 16-bit writes on 24-bit files, and sample counts that are not whole frames. Reusing a `WaveFile` or overwriting an existing file no longer carries over old sizes or stale trailing bytes.
+- `RiffFile` write overloads validate byte counts, and the scalar writes use their real widths.
+- `Converter` advances past a frame that failed to decode instead of retrying it, reports output write/close failures, refuses to overwrite its own source, and reports cancelled batch entries as not successful.
+- `WaveFileReader` bounds `fmt ` and `data` chunk sizes, treats them as unsigned, avoids `int` overflow in `readSamples`, and closes the previous stream on reopen or a failed open.
+- `jlc` exits 0 for `--help` and non-zero when a batch has failures, accepts `-b` anywhere in the arguments, keeps subdirectories in `-o` output paths, does not follow symlinked directories, and honors `--quiet`.
+
 ## [1.2.0] - 2026-11-13
 
 ### Added
@@ -82,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Java MP3 decoder with VBR support
 - 95% success rate, API compatible with original JLayer
 
+[1.2.1]: https://github.com/TamKungZ/jlayer-custom/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.3...1.2.0
 [1.1.3]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.1...1.1.3
 [1.1.1]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.0...1.1.1

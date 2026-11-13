@@ -1,7 +1,7 @@
 # JLayer - TamKungZ_ Custom Fork
 
 [![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/TamKungZ/jlayer-custom)
-[![Status](https://img.shields.io/badge/Status-Stable-success)](https://repo1.maven.org/maven2/me/tamkungz/jlayer-custom/1.2.0/)
+[![Status](https://img.shields.io/badge/Status-Stable-success)](https://repo1.maven.org/maven2/me/tamkungz/jlayer-custom/1.2.1/)
 [![License](https://img.shields.io/badge/License-LGPL-blue)](LICENSE.txt)
 [![](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
 [![MvnRepository](https://badges.mvnrepository.com/badge/me.tamkungz/jlayer-custom/badge.svg?label=MvnRepository)](https://mvnrepository.com/artifact/me.tamkungz/jlayer-custom)
@@ -65,15 +65,15 @@ Maven Central:
 <dependency>
     <groupId>me.tamkungz</groupId>
     <artifactId>jlayer-custom</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
 ```gradle
-implementation 'me.tamkungz:jlayer-custom:1.2.0'
+implementation 'me.tamkungz:jlayer-custom:1.2.1'
 ```
 
-JitPack is also supported: add `https://jitpack.io` as a repository and use `com.github.tamkungz:jlayer-custom:1.2.0`.
+JitPack is also supported: add `https://jitpack.io` as a repository and use `com.github.tamkungz:jlayer-custom:1.2.1`.
 
 ### Version Notes
 
