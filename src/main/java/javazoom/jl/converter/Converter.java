@@ -234,6 +234,7 @@ public class Converter {
             }
 
             int frame = 0;
+            int consecutiveErrors = 0;
             long startTime = System.currentTimeMillis();
             stats.startTime = startTime;
 
@@ -273,9 +274,13 @@ public class Converter {
 
                         stream.closeFrame();
                         stats.framesProcessed = frame + 1;
+                        consecutiveErrors = 0;
 
                     } catch (JavaLayerException | InternalError ex) {
                         stats.errorCount++;
+                        if (++consecutiveErrors > MAX_CONSECUTIVE_ERRORS) {
+                            throw new JavaLayerException("Too many consecutive decode errors", ex);
+                        }
                         // Skip the failed frame so the next iteration advances
                         stream.closeFrame();
                         boolean stop = !progressListener.converterException(ex);
@@ -356,6 +361,9 @@ public class Converter {
         
         return results;
     }
+
+    /** Give up when this many frames in a row fail to decode. */
+    private static final int MAX_CONSECUTIVE_ERRORS = 1000;
 
     protected int countFrames(InputStream in) {
         return -1;
