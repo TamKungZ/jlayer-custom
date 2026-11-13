@@ -4,32 +4,40 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, e.g. 1.2.0
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   release:
+    if: github.event_name == 'push' || github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: release
     permissions:
       contents: write
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
           persist-credentials: false
 
       - name: Resolve version
         id: version
-        env:
-          TAG: ${{ github.ref_name }}
         run: |
           if [[ ! "$TAG" =~ ^([0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?)$ ]]; then
             echo "::error::Tag '$TAG' is not a valid version tag"
@@ -55,22 +63,33 @@ jobs:
           distribution: temurin
           cache: maven
           server-id: central
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
+          server-username-env-var: MAVEN_USERNAME
+          server-password-env-var: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.SIGN_GPG_PRIVATE }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
+
+      - name: Select signing key
+        id: gpg
+        run: |
+          gpg --list-secret-keys --keyid-format long
+          key="$(gpg --list-secret-keys --with-colons | awk -F: '$1 == "sec" { print $5; exit }')"
+          if [ -z "$key" ]; then
+            echo "::error::SIGN_GPG_PRIVATE does not contain a secret key. Export it with: gpg --armor --export-secret-keys <KEYID>"
+            exit 1
+          fi
+          echo "keyname=$key" >> "$GITHUB_OUTPUT"
 
       - name: Build, test, sign and deploy to Maven Central
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.SIGN_GPG_PASSPHRASE }}
-        run: mvn -B -ntp clean deploy
+          GPG_KEYNAME: ${{ steps.gpg.outputs.keyname }}
+        run: mvn -B -ntp clean deploy -Dgpg.keyname="$GPG_KEYNAME"
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           files=(target/jlayer-custom-"$VERSION"*.jar)
