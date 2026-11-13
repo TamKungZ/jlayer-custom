@@ -59,9 +59,8 @@ if (wordPointer >= maxWords)
 
 ## Installation
 
-### Maven Central (Recommended)
+Maven Central:
 
-#### Maven
 ```xml
 <dependency>
     <groupId>me.tamkungz</groupId>
@@ -70,66 +69,24 @@ if (wordPointer >= maxWords)
 </dependency>
 ```
 
-#### Gradle
 ```gradle
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'me.tamkungz:jlayer-custom:1.2.0'
-}
+implementation 'me.tamkungz:jlayer-custom:1.2.0'
 ```
 
-#### Gradle Kotlin DSL
-```kotlin
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation("me.tamkungz:jlayer-custom:1.2.0")
-}
-```
-
-### Alternative: JitPack
-
-#### Maven
-```xml
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
-
-<dependency>
-    <groupId>com.github.tamkungz</groupId>
-    <artifactId>jlayer-custom</artifactId>
-    <version>1.2.0</version>
-</dependency>
-```
-
-#### Gradle
-```gradle
-repositories {
-    maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-    implementation 'com.github.tamkungz:jlayer-custom:1.2.0'
-}
-```
+JitPack is also supported: add `https://jitpack.io` as a repository and use `com.github.tamkungz:jlayer-custom:1.2.0`.
 
 ### Version Notes
 
-However, for the best user experience, we recommend using the latest version.
+We recommend using the latest version.
 
 > **1.0.2.x**  
 > The 1.0.2.* line focuses solely on fixing issues from the original JLayer implementation. There are no new features or behavioral changes. If your project previously used JLayer (2010–2024), this version is recommended for maximum compatibility.
 
 > **1.0.5+**  
 > Version 1.0.5 includes several internal improvements aimed at better performance. While execution efficiency is enhanced, some legacy code that depends on the original JLayer behavior may require minor adjustments.
+
+> **1.2.0**  
+> The modern API moved from `javazoom.jl.modern` to `me.tamkungz.jlayer.modern`. Update imports when upgrading from 1.1.x.
 
 ---
 
@@ -156,7 +113,7 @@ However, for the best user experience, we recommend using the latest version.
 - Enhanced VBR header parsing
 - Improved thread safety and resource cleanup
 
-### 4. Modern API (`javazoom.jl.modern`)
+### 4. Modern API (`me.tamkungz.jlayer.modern`)
 - `Mp3Decoder`: iterate, stream, or pull frames with `decodeNextFrame()` / `decodeUpTo(int)`
 - `Mp3Player`: pause/resume/stop, state and position, async playback
 - `Mp3Info`: metadata probing that does not disturb decode or playback state
