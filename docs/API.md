@@ -41,4 +41,14 @@ The generated site will appear in `target/site/apidocs`.
 ## Modern API (me.tamkungz.jlayer.modern)
 - `Mp3Decoder.decodeNextFrame()` — Returns the next `Mp3Frame`, or `null` at end of stream.
 - `Mp3Decoder.decodeUpTo(int maxFrames)` — Decodes a bounded batch of frames.
-- These pull methods share the single decode pass with `iterator()`, `stream()` and `forEach(...)`; mixing them throws `IllegalStateException`.
+- `Mp3Decoder.skipFrames(int count)` — Skips frames without decoding them and returns how many were skipped.
+- `Mp3Decoder.writeWav(Path)` / `writeWav(OutputStream)` — Decodes the remaining frames into a 16-bit PCM WAV file or stream.
+- `Mp3Decoder.getInfo()` / `getTags()` — Stream metadata and ID3 tags; `Mp3Info.read(Path)` and `Mp3Tags.read(Path)` do the same without a decoder.
+- The pull methods, `iterator()`, `stream()`, `forEach(...)`, `decodeAll()` and the WAV/PCM methods share one decode pass; mixing them throws `IllegalStateException`.
+
+`Mp3Frame` holds its own copy of the decoded samples, so frames stay valid after later frames are decoded.
+
+## Players (me.tamkungz.jlayer.modern.player)
+- `Mp3Player` — Playback with pause, resume and stop; `awaitTermination(long, TimeUnit)` waits for the end of playback. Listener exceptions are logged and do not stop playback.
+- `AdvancedPlayer` — Plays a frame range; `getLastError()` and `playAndWait()` report playback failures.
+- `Mp3PlayerException` and `AdvancedPlayerException` extend `Mp3Exception`.

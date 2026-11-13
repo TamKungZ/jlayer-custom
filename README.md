@@ -114,9 +114,16 @@ We recommend using the latest version.
 - Improved thread safety and resource cleanup
 
 ### 4. Modern API (`me.tamkungz.jlayer.modern`)
-- `Mp3Decoder`: iterate, stream, or pull frames with `decodeNextFrame()` / `decodeUpTo(int)`
-- `Mp3Player`: pause/resume/stop, state and position, async playback
-- `Mp3Info`: metadata probing that does not disturb decode or playback state
+- `Mp3Decoder`: iterate, stream, or pull frames with `decodeNextFrame()` / `decodeUpTo(int)`, skip ahead with `skipFrames(int)`, or convert with `writeWav(Path)`
+- `Mp3Info` and `Mp3Tags`: stream metadata, ID3v1/v2 text fields and cover art, read without disturbing decode state
+- `me.tamkungz.jlayer.modern.player`: `Mp3Player` (pause/resume/stop, state, position, `awaitTermination`) and `AdvancedPlayer` (frame ranges)
+
+```java
+try (Mp3Decoder decoder = Mp3Decoder.fromPath(Path.of("song.mp3"))) {
+    System.out.println(decoder.getInfo() + " " + decoder.getTags());
+    decoder.writeWav(Path.of("song.wav"));
+}
+```
 
 ### 5. Compatibility
 - The original `javazoom.jl.decoder` and `javazoom.jl.player` APIs are kept
