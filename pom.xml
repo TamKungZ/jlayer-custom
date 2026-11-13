@@ -7,7 +7,7 @@
 
   <groupId>me.tamkungz</groupId>
   <artifactId>jlayer-custom</artifactId>
-  <version>1.1.3</version>
+  <version>1.2.0</version>
   <packaging>jar</packaging>
 
   <name>JLayer Custom</name>
@@ -84,7 +84,7 @@
     <project.icon.svg>https://dev.tamkungz.me/favicon.svg</project.icon.svg>
     <project.icon.ico>https://dev.tamkungz.me/favicon.ico</project.icon.ico>
 
-    <junit.version>5.10.2</junit.version>
+    <junit.version>5.13.4</junit.version>
     <gpg.keyname>7311416EAA9848E4</gpg.keyname>
   </properties>
 
@@ -104,7 +104,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>3.14.1</version>
         <configuration>
           <release>17</release>
         </configuration>
@@ -114,14 +114,14 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
+        <version>3.5.4</version>
       </plugin>
 
       <!-- JAR Manifest Metadata -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.4.2</version>
         <configuration>
           <archive>
             <manifest>
@@ -146,7 +146,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.3.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -162,7 +162,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.6.3</version>
+        <version>3.11.3</version>
         <configuration>
           <doclint>none</doclint>
         </configuration>
@@ -181,7 +181,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.8</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -197,7 +197,7 @@
       <plugin>
         <groupId>org.sonatype.central</groupId>
         <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>0.8.0</version>
+        <version>0.9.0</version>
         <extensions>true</extensions>
       </plugin>
 
