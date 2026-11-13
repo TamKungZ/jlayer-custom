@@ -41,7 +41,6 @@ import javazoom.jl.player.JavaSoundAudioDevice;
  * @since 1.0
  */
 public final class Mp3Player implements AutoCloseable {
-
     public enum State {
         /** Not started or stopped. */
         STOPPED,
@@ -79,8 +78,6 @@ public final class Mp3Player implements AutoCloseable {
         t.setDaemon(daemon);
         this.playbackThread = t;
     }
-
-    // ---------- Builder ----------
 
     public static Builder fromPath(Path path) throws IOException {
         return new Builder(Files.newInputStream(path), path);
@@ -154,8 +151,6 @@ public final class Mp3Player implements AutoCloseable {
             return player;
         }
     }
-
-    // ---------- Playback Control ----------
 
     /** Starts or resumes playback (non‑blocking). */
     public void play() {
@@ -289,8 +284,6 @@ public final class Mp3Player implements AutoCloseable {
         return lastError;
     }
 
-    // ---------- Internal Playback Loop ----------
-
     private void runPlayback() {
         try {
             for (Mp3Frame frame : decoder) {
@@ -385,8 +378,6 @@ public final class Mp3Player implements AutoCloseable {
         }
     }
 
-    // ---------- Listener Interface ----------
-
     /** Listener for playback events. All methods have default no-op implementations. */
     public interface Listener {
         /** Called when playback state changes. */
@@ -401,8 +392,6 @@ public final class Mp3Player implements AutoCloseable {
         /** Called when an error occurs during playback. */
         default void onError(Throwable error) {}
     }
-
-    // ---------- More ----------
 
     public boolean isPlaying() {
         return state == State.PLAYING;

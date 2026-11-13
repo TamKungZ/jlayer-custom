@@ -64,7 +64,6 @@ import javazoom.jl.decoder.SampleBuffer;
  * @since 1.0
  */
 public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
-
     private static final class OpenedPathSource {
         private final InputStream in;
         private final long size;
@@ -89,8 +88,6 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
     private final Decoder.Params params;
     private final Obuffer builderOutputBuffer;
     private final Decoder.DecodeEventListener builderEventListener;
-
-    // ---------- Constructors ----------
 
     private Mp3Decoder(InputStream in, Path sourcePath, long streamSize, Builder builder) {
         Objects.requireNonNull(in, "InputStream must not be null");
@@ -152,8 +149,6 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
         return fromPath(Path.of(fileName));
     }
 
-    // ---------- Builder ----------
-
     public static Builder builder() {
         return new Builder();
     }
@@ -210,8 +205,6 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
             return new Mp3Decoder(path, this);
         }
     }
-
-    // ---------- Public API ----------
 
     /**
      * Returns metadata about the MP3 stream (reads the first frame).
@@ -437,8 +430,6 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
         }
     }
 
-    // ---------- Internal ----------
-
     /**
      * Ensures the decoder is open. Throws an exception if closed. 
      * This is called at the start of all public methods to prevent usage after close.
@@ -450,7 +441,6 @@ public final class Mp3Decoder implements Iterable<Mp3Frame>, AutoCloseable {
     }
 
     private class Mp3Iterator implements Iterator<Mp3Frame> {
-
         private final Decoder decoder;
         private Header nextHeader;
         private boolean eos = false;

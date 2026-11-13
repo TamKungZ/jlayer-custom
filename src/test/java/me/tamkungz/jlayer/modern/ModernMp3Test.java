@@ -68,11 +68,6 @@ import javazoom.jl.player.advanced.PlaybackEvent;
 @DisplayName("Modern JLayer API Tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ModernMp3Test {
-
-    // -----------------------------------------------------------------------
-    // Shared infrastructure
-    // -----------------------------------------------------------------------
-
     private static Path testMp3Path;
 
     @BeforeAll
@@ -117,17 +112,10 @@ class ModernMp3Test {
         return thread.isAlive();
     }
 
-    // =======================================================================
-    // Mp3Decoder
-    // =======================================================================
-
     @Nested
     @DisplayName("Mp3Decoder")
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class Mp3DecoderTests {
-
-        // --- Construction ---------------------------------------------------
-
         @Test @Order(1)
         @DisplayName("fromPath() builds a decoder")
         void buildFromPath() throws Exception {
@@ -170,8 +158,6 @@ class ModernMp3Test {
                 assertNotNull(d);
             }
         }
-
-        // --- getInfo() ---
 
         @Test @Order(10)
         @DisplayName("getInfo() returns non-null Mp3Info")
@@ -235,8 +221,6 @@ class ModernMp3Test {
             }
             assertTrue(count > 0, "Fresh decoder must decode frames");
         }
-
-        // --- Iteration ---
 
         @Test @Order(20)
         @DisplayName("iterator() reports hasNext() on a non-empty file")
@@ -348,8 +332,6 @@ class ModernMp3Test {
             }
         }
 
-        // --- Stream API -----------------------------------------------------
-
         @Test @Order(30)
         @DisplayName("stream() yields decoded frames")
         void streamYieldsFrames() throws Exception {
@@ -369,8 +351,6 @@ class ModernMp3Test {
                 lengths.forEach(n -> assertTrue(n > 0));
             }
         }
-
-        // --- Bulk decode ----------------------------------------------------
 
         @Test @Order(40)
         @DisplayName("decodeAll() returns a non-empty list")
@@ -411,8 +391,6 @@ class ModernMp3Test {
             assertEquals(le, be);
         }
 
-        // --- Frame byte conversions -----------------------------------------
-
         @Test @Order(50)
         @DisplayName("toByteArrayLittleEndian() length == sampleCount * 2")
         void frameToByteLE() throws Exception {
@@ -431,8 +409,6 @@ class ModernMp3Test {
             }
         }
 
-        // --- Async ----------------------------------------------------------
-
         @Test @Order(60)
         @DisplayName("decodeAsync() completes without error and processes all frames")
         @Timeout(value = 30, unit = TimeUnit.SECONDS)
@@ -444,8 +420,6 @@ class ModernMp3Test {
             assertTrue(n.get() > 0);
             System.out.println("decodeAsync: " + n.get() + " frames");
         }
-
-        // --- Lifecycle ------------------------------------------------------
 
         @Test @Order(70)
         @DisplayName("close() is idempotent")
@@ -483,17 +457,10 @@ class ModernMp3Test {
         }
     }
 
-    // =======================================================================
-    // Mp3Player
-    // =======================================================================
-
     @Nested
     @DisplayName("Mp3Player")
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class Mp3PlayerTests {
-
-        // --- Construction ---------------------------------------------------
-
         @Test @Order(1)
         @DisplayName("fromPath() builds a player")
         void buildFromPath() throws Exception {
@@ -521,8 +488,6 @@ class ModernMp3Test {
                 assertNotNull(p);
             }
         }
-
-        // --- Initial state --------------------------------------------------
 
         @Test @Order(10)
         @DisplayName("Initial state is STOPPED and isPlaying() is false")
@@ -553,8 +518,6 @@ class ModernMp3Test {
             }
             assertTrue(finished.getCount() == 0, "Playback should complete after getInfo()");
         }
-
-        // --- State transitions ----------------------------------------------
 
         @Test @Order(20)
         @DisplayName("play() transitions state to PLAYING")
@@ -684,8 +647,6 @@ class ModernMp3Test {
             assertThrows(IllegalStateException.class, p::play);
         }
 
-        // --- Listener callbacks ---------------------------------------------
-
         @Test @Order(30)
         @DisplayName("onStateChanged fires on play()")
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
@@ -789,8 +750,6 @@ class ModernMp3Test {
             assertTrue(newCalled.get());
         }
 
-        // --- Async ----------------------------------------------------------
-
         @Test @Order(40)
         @DisplayName("playAsync() returns a non-null CompletableFuture")
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
@@ -805,8 +764,6 @@ class ModernMp3Test {
             }
         }
 
-        // --- getPosition ----------------------------------------------------
-
         @Test @Order(50)
         @DisplayName("getPosition() returns 0 before the player is started")
         void getPositionWhenStopped() throws Exception {
@@ -815,8 +772,6 @@ class ModernMp3Test {
                 assertEquals(0, p.getPosition());
             }
         }
-
-        // --- Lifecycle ------------------------------------------------------
 
         @Test @Order(60)
         @DisplayName("close() is idempotent")
@@ -858,17 +813,10 @@ class ModernMp3Test {
         }
     }
 
-    // =======================================================================
-    // AdvancedPlayer
-    // =======================================================================
-
     @Nested
     @DisplayName("AdvancedPlayer")
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class AdvancedPlayerTests {
-
-        // --- Construction ---------------------------------------------------
-
         @Test @Order(1)
         @DisplayName("fromPath() builds player")
         void buildFromPath() throws Exception {
@@ -897,8 +845,6 @@ class ModernMp3Test {
             }
         }
 
-        // --- Info -----------------------------------------------------------
-
         @Test @Order(10)
         @DisplayName("getInfo() returns valid Mp3Info")
         void getInfo() throws Exception {
@@ -911,8 +857,6 @@ class ModernMp3Test {
                 assertTrue(ch == 1 || ch == 2, "Expected 1 or 2 channels, got " + ch);
             }
         }
-
-        // --- Playback -------------------------------------------------------
 
         /**
          * Starts playback and stops it after a moment.
@@ -1076,8 +1020,6 @@ class ModernMp3Test {
                     () -> AdvancedPlayer.fromPath(testMp3Path).toFrame(-1));
         }
 
-        // --- Lifecycle ------------------------------------------------------
-
         @Test @Order(30)
         @DisplayName("close() is idempotent")
         void closeIdempotent() throws Exception {
@@ -1106,8 +1048,6 @@ class ModernMp3Test {
                 }
             });
         }
-
-        // --- Listener -------------------------------------------------------
 
         @Test @Order(40)
         @DisplayName("ModernPlaybackListener receives at least one event")
@@ -1162,14 +1102,9 @@ class ModernMp3Test {
         }
     }
 
-    // =======================================================================
-    // Integration
-    // =======================================================================
-
     @Nested
     @DisplayName("Integration")
     class IntegrationTests {
-
         /**
          * Decodes the full file with both {@link Mp3Decoder} (direct) and
          * {@link Mp3Player} (via {@code onFramePlayed}) and checks frame counts match.
@@ -1251,7 +1186,6 @@ class ModernMp3Test {
                         }
                         @Override public void onError(Throwable t) { err.set(t); }
                     }).build()) {
-
                 // Start async so we can pause from this thread
                 CompletableFuture<Void> future = p.playAsync();
 

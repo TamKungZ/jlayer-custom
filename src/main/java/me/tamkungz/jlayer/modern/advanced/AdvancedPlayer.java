@@ -26,7 +26,6 @@ import javazoom.jl.player.advanced.PlaybackListener;
  * from the JLayer library.
  */
 public final class AdvancedPlayer implements AutoCloseable {
-
     private final javazoom.jl.player.advanced.AdvancedPlayer player; // fully qualified to avoid confusion
     private final InputStream inputStream;
     private final Thread playThread;
@@ -102,8 +101,6 @@ public final class AdvancedPlayer implements AutoCloseable {
             @Override public void close() { /* intentionally empty */ }
         };
     }
-
-    // ---------- Builder ----------
 
     public static Builder fromPath(Path path) throws IOException {
         return new Builder(Files.newInputStream(path), path);
@@ -184,8 +181,6 @@ public final class AdvancedPlayer implements AutoCloseable {
         }
     }
 
-    // ---------- Playback Control ----------
-
     public synchronized void start() {
         ensureNotClosed();
         if (!playThread.isAlive()) {
@@ -263,8 +258,6 @@ public final class AdvancedPlayer implements AutoCloseable {
             }
         }
     }
-
-    // ---------- Internal ----------
 
     private void ensureNotClosed() {
         if (closed) {
