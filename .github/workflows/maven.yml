@@ -6,34 +6,43 @@ on:
   pull_request:
     branches: [ master, main ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
+      fail-fast: false
       matrix:
         java: [17, 21, 25]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           java-version: ${{ matrix.java }}
           distribution: temurin
           cache: maven
 
-      - name: Build + Run Unit Tests
-        run: mvn -B clean test
+      - name: Build and test
+        run: mvn -B -ntp clean verify -Dgpg.skip=true
 
-      - name: Package JAR
-        run: mvn -B package -DskipTests
-
-      - name: Upload Artifact
-        if: success()
-        uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: jlayer-custom-${{ matrix.java }}
           path: target/*.jar
+          if-no-files-found: error
+          retention-days: 14
