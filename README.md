@@ -1,7 +1,7 @@
 # JLayer - TamKungZ_ Custom Fork
 
 [![Java](https://img.shields.io/badge/Java-17-b07219)](https://github.com/TamKungZ/jlayer-custom)
-[![Status](https://img.shields.io/badge/Status-Stable-success)](https://repo1.maven.org/maven2/io/github/tamkungz/jlayer-custom/1.0.2.2/)
+[![Status](https://img.shields.io/badge/Status-Stable-success)](https://repo1.maven.org/maven2/me/tamkungz/jlayer-custom/1.2.0/)
 [![License](https://img.shields.io/badge/License-LGPL-blue)](LICENSE.txt)
 [![](https://jitpack.io/v/TamKungZ/jlayer-custom.svg)](https://jitpack.io/#TamKungZ/jlayer-custom)
 [![MvnRepository](https://badges.mvnrepository.com/badge/me.tamkungz/jlayer-custom/badge.svg?label=MvnRepository)](https://mvnrepository.com/artifact/me.tamkungz/jlayer-custom)
@@ -40,10 +40,10 @@ at javazoom.jl.decoder.Bitstream.getBits()
 **Solution**: Check against actual `frameSize` for each frame instead of buffer capacity.
 
 **Impact**: 
-- ✅ VBR MP3s now work correctly
-- ✅ 320kbps files no longer crash
-- ✅ LAME-encoded files play reliably
-- ✅ Success rate: ~30% → **95%+**
+- VBR MP3s now work correctly
+- 320kbps files no longer crash
+- LAME-encoded files play reliably
+- Success rate: ~30% → **95%+**
 
 ### Changes in `Bitstream.getBits()`
 ```java
@@ -64,9 +64,9 @@ if (wordPointer >= maxWords)
 #### Maven
 ```xml
 <dependency>
-    <groupId>io.github.tamkungz</groupId>
+    <groupId>me.tamkungz</groupId>
     <artifactId>jlayer-custom</artifactId>
-    <version>1.0.2.2</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.tamkungz:jlayer-custom:1.0.2.2'
+    implementation 'me.tamkungz:jlayer-custom:1.2.0'
 }
 ```
 
@@ -88,7 +88,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.tamkungz:jlayer-custom:1.0.2.2")
+    implementation("me.tamkungz:jlayer-custom:1.2.0")
 }
 ```
 
@@ -106,7 +106,7 @@ dependencies {
 <dependency>
     <groupId>com.github.tamkungz</groupId>
     <artifactId>jlayer-custom</artifactId>
-    <version>1.0.2.2</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
@@ -117,7 +117,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.tamkungz:jlayer-custom:1.0.2.2'
+    implementation 'com.github.tamkungz:jlayer-custom:1.2.0'
 }
 ```
 
@@ -156,21 +156,25 @@ However, for the best user experience, we recommend using the latest version.
 - Enhanced VBR header parsing
 - Improved thread safety and resource cleanup
 
-### 4. No API Changes
-- **100% compatible** with original JLayer
-- Drop-in replacement - just change dependency
-- All existing code works without modification
+### 4. Modern API (`javazoom.jl.modern`)
+- `Mp3Decoder`: iterate, stream, or pull frames with `decodeNextFrame()` / `decodeUpTo(int)`
+- `Mp3Player`: pause/resume/stop, state and position, async playback
+- `Mp3Info`: metadata probing that does not disturb decode or playback state
+
+### 5. Compatibility
+- The original `javazoom.jl.decoder` and `javazoom.jl.player` APIs are kept
+- See [Version Notes](#version-notes) for behavior differences from the original JLayer
 
 ---
 
 ## Testing
 
 Tested with **254+ diverse MP3 files**:
-- ✅ CBR: 128kbps, 192kbps, 320kbps
-- ✅ VBR: LAME v3.98+, modern encoders  
-- ✅ Various sample rates: 44.1kHz, 48kHz, 32kHz
-- ✅ Stereo and mono files
-- ✅ Files with ID3v1/v2 tags and no tags
+- CBR: 128kbps, 192kbps, 320kbps
+- VBR: LAME v3.98+, modern encoders  
+- Various sample rates: 44.1kHz, 48kHz, 32kHz
+- Stereo and mono files
+- Files with ID3v1/v2 tags and no tags
 
 **Comprehensive Test Suite (JUnit 5)**:
 - BitstreamTest: Header parsing, frame reading, state management
@@ -261,7 +265,6 @@ Yes, It supports VBRI and XING VBR header too.
 The API provides a `getRawID3v2()` method to get an `InputStream` on ID3v2 frames.
 
 ### How to skip frames to have a seek feature?
-<<<<<<< HEAD
 
 See `javazoom.jl.player.advanced.jlap` source to learn how to skip frames.
 
