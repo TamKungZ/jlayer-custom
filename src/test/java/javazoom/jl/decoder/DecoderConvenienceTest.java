@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -63,6 +64,23 @@ class DecoderConvenienceTest {
             }
             assertTrue(frames > 0);
             assertNull(decoder.decodeNextFrameToPCM(bs));
+        }
+    }
+
+    @Test
+    @DisplayName("decodeNextFrame() returns independent buffers with samples for every frame")
+    void decodeNextFrameBuffers() throws Exception {
+        try (InputStream in = openTestMp3()) {
+            Bitstream bs = new Bitstream(in);
+            Decoder decoder = new Decoder();
+            SampleBuffer first = decoder.decodeNextFrame(bs);
+            short[] firstSamples = first.getBufferCopy();
+            for (int i = 0; i < 10; i++) {
+                SampleBuffer next = decoder.decodeNextFrame(bs);
+                assertNotNull(next);
+                assertTrue(next.getBufferLength() > 0, "frame " + (i + 1) + " is empty");
+            }
+            assertArrayEquals(firstSamples, first.getBufferCopy());
         }
     }
 

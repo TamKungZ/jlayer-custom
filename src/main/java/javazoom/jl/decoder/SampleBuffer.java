@@ -158,6 +158,21 @@ public class SampleBuffer extends Obuffer {
     }
     
     /**
+     * Returns an independent snapshot of this buffer: same format, samples and write
+     * positions. Decoders reuse their output buffer from frame to frame, so keep a
+     * snapshot when a decoded frame has to outlive the next decode call.
+     *
+     * @return a new buffer with the same contents
+     * @since 1.2.0
+     */
+    public SampleBuffer copy() {
+        SampleBuffer snapshot = new SampleBuffer(frequency, channels);
+        System.arraycopy(buffer, 0, snapshot.buffer, 0, buffer.length);
+        System.arraycopy(bufferP, 0, snapshot.bufferP, 0, bufferP.length);
+        return snapshot;
+    }
+
+    /**
      * Gets a copy of the buffered samples.
      * <p>
      * This method creates a new array containing only the valid samples,

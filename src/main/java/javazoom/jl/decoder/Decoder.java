@@ -390,12 +390,12 @@ public class Decoder implements DecoderErrors {
             return null;
         }
         
-        int channels = (h.mode() == Header.SINGLE_CHANNEL) ? 1 : 2;
-        SampleBuffer sb = new SampleBuffer(h.frequency(), channels);
-        setOutputBuffer(sb);
-        decodeFrame(h, stream);
+        Obuffer decoded = decodeFrame(h, stream);
         stream.closeFrame();
-        return sb;
+        if (decoded instanceof SampleBuffer samples) {
+            return samples.copy();
+        }
+        throw new IllegalStateException("decodeNextFrame requires a SampleBuffer output buffer");
     }
     
     /**

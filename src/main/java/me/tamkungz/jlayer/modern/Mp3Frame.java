@@ -1,13 +1,13 @@
 package me.tamkungz.jlayer.modern;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.SampleBuffer;
 
 /**
- * Immutable container for a decoded MP3 frame.
- * <p>
- * Contains the PCM samples and format information for a single frame.
- * </p>
+ * A decoded MP3 frame: PCM samples plus the format information of the frame.
  *
  * @since 1.0
  */
@@ -17,27 +17,28 @@ public final class Mp3Frame {
     private final SampleBuffer sampleBuffer;
     private final long frameNumber;
 
-    // Package-private constructor
     Mp3Frame(Header header, SampleBuffer sampleBuffer, long frameNumber) {
         this.header = header;
         this.sampleBuffer = sampleBuffer;
         this.frameNumber = frameNumber;
     }
 
-    /** Returns the raw sample buffer (direct reference, be careful). */
+    /**
+     * Returns the backing sample array without copying. Only the first
+     * {@link #getSampleCount()} entries are valid.
+     */
     public short[] getSamples() {
         return sampleBuffer.getBuffer();
     }
 
-    /** Returns a copy of the samples (safer). */
+    /** Returns a copy of the valid samples. */
     public short[] getSamplesCopy() {
         return sampleBuffer.getBufferCopy();
     }
 
-    /** Returns the number of valid samples in this frame. */
+    /** Returns the number of valid samples in this frame (all channels, interleaved). */
     public int getSampleCount() {
-        int len = sampleBuffer.getBufferLength();
-        return len > 0 ? len : 1; // ensure positive to avoid edge-case zero-length frames
+        return sampleBuffer.getBufferLength();
     }
 
     /** Returns the number of sample frames (sample count / channels). */
@@ -60,35 +61,31 @@ public final class Mp3Frame {
         return frameNumber;
     }
 
-    /** Returns the frame header (raw). */
+    /** Returns the duration of this frame in milliseconds. */
+    public double getDurationMs() {
+        return getSampleFrameCount() * 1000.0 / getSampleRate();
+    }
+
+    /** Returns the raw frame header. */
     public Header getHeader() {
         return header;
     }
 
-    /** Converts the frame's PCM data to a byte array in little‑endian format. */
+    /** Returns the frame's PCM data as 16-bit little-endian bytes. */
     public byte[] toByteArrayLittleEndian() {
-        short[] samples = sampleBuffer.getBuffer();
-        int len = sampleBuffer.getBufferLength();
-        byte[] out = new byte[len * 2];
-        for (int i = 0; i < len; i++) {
-            short s = samples[i];
-            out[i * 2] = (byte) (s & 0xFF);
-            out[i * 2 + 1] = (byte) ((s >> 8) & 0xFF);
-        }
-        return out;
+        return toPcm(ByteOrder.LITTLE_ENDIAN);
     }
 
-    /** Converts the frame's PCM data to a byte array in big‑endian format. */
+    /** Returns the frame's PCM data as 16-bit big-endian bytes. */
     public byte[] toByteArrayBigEndian() {
-        short[] samples = sampleBuffer.getBuffer();
-        int len = sampleBuffer.getBufferLength();
-        byte[] out = new byte[len * 2];
-        for (int i = 0; i < len; i++) {
-            short s = samples[i];
-            out[i * 2] = (byte) ((s >> 8) & 0xFF);
-            out[i * 2 + 1] = (byte) (s & 0xFF);
-        }
-        return out;
+        return toPcm(ByteOrder.BIG_ENDIAN);
+    }
+
+    private byte[] toPcm(ByteOrder order) {
+        int count = getSampleCount();
+        ByteBuffer out = ByteBuffer.allocate(count * 2).order(order);
+        out.asShortBuffer().put(sampleBuffer.getBuffer(), 0, count);
+        return out.array();
     }
 
     @Override
