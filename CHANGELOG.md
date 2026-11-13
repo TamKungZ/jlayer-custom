@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Converter` advances past a frame that failed to decode instead of retrying it, reports output write/close failures, refuses to overwrite its own source, and reports cancelled batch entries as not successful.
 - `WaveFileReader` bounds `fmt ` and `data` chunk sizes, treats them as unsigned, avoids `int` overflow in `readSamples`, and closes the previous stream on reopen or a failed open.
 - `Converter` stops after 1000 consecutive decode errors instead of looping.
+- `WaveFileObuffer` uses integer write positions, supporting buffers larger than 32,767 samples.
 - `jlc` exits 0 for `--help` and non-zero when a batch has failures, accepts `-b` anywhere in the arguments, keeps subdirectories in `-o` output paths, does not follow symlinked directories, and honors `--quiet`.
 
 ## [1.2.0] - 2026-11-13

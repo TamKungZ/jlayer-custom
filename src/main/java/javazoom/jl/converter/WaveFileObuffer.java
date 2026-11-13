@@ -55,7 +55,7 @@ public class WaveFileObuffer extends Obuffer {
     private static final int DEFAULT_BUFFER_MULTIPLIER = 2;
     
     private final short[] buffer;
-    private final short[] bufferP;
+    private final int[] bufferP;
     private final int channels;
     private final WaveFile outWave;
     private final int bufferSize;
@@ -110,11 +110,11 @@ public class WaveFileObuffer extends Obuffer {
 
         this.bufferSize = bufferSize;
         this.buffer = new short[bufferSize];
-        this.bufferP = new short[MAXCHANNELS];
+        this.bufferP = new int[MAXCHANNELS];
         this.channels = number_of_channels;
 
         for (int i = 0; i < number_of_channels; ++i) {
-            bufferP[i] = (short) i;
+            bufferP[i] = i;
         }
 
         this.outWave = new WaveFile();
@@ -164,7 +164,7 @@ public class WaveFileObuffer extends Obuffer {
             }
             
             buffer[bufferP[channel]] = value;
-            bufferP[channel] += (short) channels;
+            bufferP[channel] += channels;
         }
     }
 
@@ -200,7 +200,7 @@ public class WaveFileObuffer extends Obuffer {
                 
                 // Reset buffer positions
                 for (int i = 0; i < channels; ++i) {
-                    bufferP[i] = (short) i;
+                    bufferP[i] = i;
                 }
             }
         }
@@ -255,7 +255,7 @@ public class WaveFileObuffer extends Obuffer {
         synchronized (lock) {
             Arrays.fill(buffer, (short) 0);
             for (int i = 0; i < channels; ++i) {
-                bufferP[i] = (short) i;
+                bufferP[i] = i;
             }
         }
     }
