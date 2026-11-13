@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README install coordinates to `me.tamkungz:jlayer-custom` and the current version, and removed a leftover merge conflict marker.
 - Updated JUnit and Maven plugin versions, and added Java 25 to the CI matrix.
 - Hardened GitHub Actions workflows (least-privilege permissions, pinned action SHAs, timeouts, concurrency).
-- Replaced the `publish.yml` workflow with `release.yml`: pushing a `vX.Y.Z` tag builds the project and deploys the signed artifacts to Maven Central, and publishes a GitHub release with the matching CHANGELOG section as release notes. Release tags now use the `v` prefix.
+- Replaced the `publish.yml` workflow with `release.yml`: pushing an `X.Y.Z` tag builds the project and deploys the signed artifacts to Maven Central, and publishes a GitHub release with the matching CHANGELOG section as release notes.
 - Refreshed `docs/API.md` to match the current API.
 
 ## [1.1.3] - 2026-02-24

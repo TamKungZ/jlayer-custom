@@ -73,7 +73,7 @@ Maven Central:
 implementation 'me.tamkungz:jlayer-custom:1.2.0'
 ```
 
-JitPack is also supported: add `https://jitpack.io` as a repository and use `com.github.tamkungz:jlayer-custom:v1.2.0` (JitPack versions follow the `v` tag).
+JitPack is also supported: add `https://jitpack.io` as a repository and use `com.github.tamkungz:jlayer-custom:1.2.0`.
 
 ### Version Notes
 
