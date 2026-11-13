@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-02-24
+
+### Added
+- Introduced incremental (pull-based) decoding support in modern [`Mp3Decoder`](src/main/java/javazoom/jl/modern/Mp3Decoder.java).
+  - Added `decodeNextFrame()` for single-frame consumption, returning `null` at EOF.
+  - Added `decodeUpTo(int)` for bounded batch decoding with argument validation.
+  - Enforced single-pass ownership between iterator-based and pull-based decoding APIs.
+  - Existing APIs (`iterator()`, `stream()`, and `decodeAsync()`) remain unchanged in signature and behavior.
+
+- Expanded coverage in [`ModernMp3Test`](src/test/java/javazoom/jl/modern/ModernMp3Test.java).
+  - Added tests for incremental decoding, EOF handling, argument validation, and iterator/pull API exclusivity.
+  - Verified full pass: 74 tests, 0 failures, 0 errors.
+
+### Fixed
+- Corrected ID3v2 size parsing in modern decoding pipeline to use syncsafe integer handling.
+- Restored full signed 16-bit PCM clipping range during synthesis.
+- Ensured synthesis filter initialization respects the provided EQ argument.
+- Improved bitstream exception mapping to surface readable error messages when available.
+
+### Changed
+- Updated Maven metadata for `1.1.3`.
+- Enriched generated JAR manifest with project website and icon metadata.
+
+[1.1.3]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.1...1.1.3
+[1.1.1]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.0...1.1.1
+[1.0.2.1]: https://github.com/TamKungZ/jlayer-custom/releases/tag/1.0.2.1
+
 ## [1.1.1] - 2026-02-23
 
 ### Fixed
