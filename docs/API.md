@@ -38,6 +38,7 @@ mvn javadoc:javadoc
 
 The generated site will appear in `target/site/apidocs`.
 
-## Next steps (suggested)
-- Add Javadoc comments directly to the public methods in `Bitstream`, `Decoder`, and `WaveFileReader` (this doc provides a short summary).  
-- Add unit tests for `Decoder` convenience methods to validate WAV output payloads and sizes.
+## Modern API (javazoom.jl.modern)
+- `Mp3Decoder.decodeNextFrame()` — Returns the next `Mp3Frame`, or `null` at end of stream.
+- `Mp3Decoder.decodeUpTo(int maxFrames)` — Decodes a bounded batch of frames.
+- These pull methods share the single decode pass with `iterator()`, `stream()` and `forEach(...)`; mixing them throws `IllegalStateException`.
