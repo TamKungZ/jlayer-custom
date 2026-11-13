@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-13
+
+### Added
+- Tests for `Decoder.decodeNextFrameToPCM` and `Decoder.convertToWav`.
+
+### Changed
+- Updated README install coordinates to `me.tamkungz:jlayer-custom` and the current version, and removed a leftover merge conflict marker.
+- Updated JUnit and Maven plugin versions, and added Java 25 to the CI matrix.
+- Refreshed `docs/API.md` to match the current API.
+
 ## [1.1.3] - 2026-02-24
 
 ### Added
@@ -23,14 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restored full signed 16-bit PCM clipping range during synthesis.
 - Ensured synthesis filter initialization respects the provided EQ argument.
 - Improved bitstream exception mapping to surface readable error messages when available.
+- Ensured the probe bitstream in modern `AdvancedPlayer` is always closed, and `close()` now stops playback before marking the player closed.
 
 ### Changed
 - Updated Maven metadata for `1.1.3`.
 - Enriched generated JAR manifest with project website and icon metadata.
-
-[1.1.3]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.1...1.1.3
-[1.1.1]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.0...1.1.1
-[1.0.2.1]: https://github.com/TamKungZ/jlayer-custom/releases/tag/1.0.2.1
 
 ## [1.1.1] - 2026-02-23
 
@@ -60,5 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Java MP3 decoder with VBR support
 - 95% success rate, API compatible with original JLayer
 
+[1.2.0]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.3...1.2.0
+[1.1.3]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.1...1.1.3
 [1.1.1]: https://github.com/TamKungZ/jlayer-custom/compare/1.1.0...1.1.1
 [1.0.2.1]: https://github.com/TamKungZ/jlayer-custom/releases/tag/1.0.2.1
