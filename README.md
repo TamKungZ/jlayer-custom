@@ -190,6 +190,14 @@ No, JMF is not required. You need a Java 17+ runtime with JavaSound 1.0 complian
 java javazoom.jl.converter.jlc -v -p output.wav yourfile.mp3
 ```
 
+Batch mode converts several files or whole directories:
+
+```bash
+java javazoom.jl.converter.jlc -b -r -f -o out/ music/
+```
+
+`-r` recurses into subdirectories (symlinked directories are skipped) and keeps the folder layout under `out/`, `-f` overwrites existing files, `-s` stops at the first failure and `-q` prints only errors. The exit code is 0 on success (and for `--help`) and 1 if any conversion failed.
+
 ### How to run the simple MP3 player?
 
 ```bash
