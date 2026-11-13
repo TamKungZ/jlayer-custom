@@ -47,10 +47,8 @@
     <developer>
       <id>tamkungz</id>
       <name>TamKungZ_</name>
-      <email>kittiwut.pimpromma@gmail.com</email>
+      <email>dev@tamkungz.me</email>
       <roles>
-        <role>owner</role>
-        <role>developer</role>
         <role>maintainer</role>
       </roles>
       <timezone>Asia/Bangkok</timezone>
