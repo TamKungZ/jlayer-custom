@@ -163,6 +163,16 @@ public class Converter {
         if (destName == null || destName.isEmpty()) {
             destName = generateOutputName(sourceName);
         }
+
+        try {
+            Path src = Paths.get(sourceName);
+            Path dst = Paths.get(destName);
+            if (Files.exists(src) && Files.exists(dst) && Files.isSameFile(src, dst)) {
+                throw new JavaLayerException("Source and destination are the same file: " + sourceName);
+            }
+        } catch (IOException | java.nio.file.InvalidPathException ignored) {
+            // Fall through; openInput reports unusable paths
+        }
         
         try (InputStream in = openInput(sourceName)) {
             convert(in, destName, progressListener, decoderParams);
@@ -215,7 +225,7 @@ public class Converter {
             stats.totalFrames = frameCount;
             progressListener.converterUpdate(ProgressListener.UPDATE_FRAME_COUNT, frameCount, 0);
 
-            Obuffer output = null;
+            WaveFileObuffer output = null;
             Decoder decoder = new Decoder(decoderParams);
             Bitstream stream = new Bitstream(sourceStream);
 
@@ -266,6 +276,8 @@ public class Converter {
 
                     } catch (JavaLayerException | InternalError ex) {
                         stats.errorCount++;
+                        // Skip the failed frame so the next iteration advances
+                        stream.closeFrame();
                         boolean stop = !progressListener.converterException(ex);
 
                         if (stop) {
@@ -278,6 +290,10 @@ public class Converter {
                 if (output != null) {
                     output.close();
                 }
+            }
+
+            if (output != null && output.getErrorCount() > 0) {
+                throw new JavaLayerException("Failed to write output file: " + destName);
             }
 
             stats.endTime = System.currentTimeMillis();
@@ -320,13 +336,20 @@ public class Converter {
                 long start = System.currentTimeMillis();
                 convert(source, dest, progressListener, null);
                 long duration = System.currentTimeMillis() - start;
-                results[i] = new ConversionResult(source, dest, true, null, duration);
+                if (cancelled.get()) {
+                    results[i] = new ConversionResult(source, dest, false, "Cancelled", duration);
+                } else {
+                    results[i] = new ConversionResult(source, dest, true, null, duration);
+                }
             } catch (JavaLayerException e) {
                 results[i] = new ConversionResult(source, dest, false, e.getMessage(), 0);
             }
             
             // Check for cancellation
             if (cancelled.get()) {
+                for (int j = i + 1; j < sourceFiles.length; j++) {
+                    results[j] = new ConversionResult(sourceFiles[j], null, false, "Cancelled", 0);
+                }
                 break;
             }
         }

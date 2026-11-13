@@ -187,6 +187,10 @@ public class RiffFile implements Closeable {
                             channel = file.getChannel();
 
                             try {
+                                // Discard any previous contents and size state
+                                file.setLength(0);
+                                riffHeader.ckSize = 0;
+
                                 // Write the RIFF header using NIO
                                 ByteBuffer headerBuf = ByteBuffer.allocate(8);
                                 headerBuf.order(ByteOrder.BIG_ENDIAN);
@@ -288,7 +292,7 @@ public class RiffFile implements Closeable {
      * Write short array with enhanced performance.
      */
     public int write(short[] data, int numBytes) {
-        if (data == null || numBytes < 0) {
+        if (data == null || numBytes < 0 || (numBytes & 1) != 0 || numBytes / 2 > data.length) {
             return DDC_INVALID_CALL;
         }
         
@@ -380,7 +384,7 @@ public class RiffFile implements Closeable {
                 // Little-endian write
                 file.writeByte(data & 0xFF);
                 file.writeByte((data >>> 8) & 0xFF);
-                riffHeader.ckSize += numBytes;
+                riffHeader.ckSize += 2;
                 return DDC_SUCCESS;
             } catch (IOException ioe) {
                 return DDC_FILE_ERROR;
@@ -403,7 +407,7 @@ public class RiffFile implements Closeable {
                 file.writeByte((data >>> 8) & 0xFF);
                 file.writeByte((data >>> 16) & 0xFF);
                 file.writeByte((data >>> 24) & 0xFF);
-                riffHeader.ckSize += numBytes;
+                riffHeader.ckSize += 4;
                 return DDC_SUCCESS;
             } catch (IOException ioe) {
                 return DDC_FILE_ERROR;
@@ -560,7 +564,11 @@ public class RiffFile implements Closeable {
             } catch (IOException ioe) {
                 return DDC_FILE_ERROR;
             }
-            return write(data, numBytes);
+            // Overwriting an existing header must not grow the RIFF size
+            int savedSize = riffHeader.ckSize;
+            int rc = write(data, numBytes);
+            riffHeader.ckSize = savedSize;
+            return rc;
         }
     }
 

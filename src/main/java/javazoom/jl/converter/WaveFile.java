@@ -223,6 +223,9 @@ public class WaveFile extends RiffFile {
         }
 
         waveFormat.data.config(samplingRate, bitsPerSample, numChannels);
+        pcmData.ckSize = 0;
+        numSamples = 0;
+        totalBytesWritten = 0;
 
         int retcode = Open(filename, RFM_WRITE);
 
@@ -273,6 +276,11 @@ public class WaveFile extends RiffFile {
         if (data == null || numData < 0 || numData > data.length) {
             return DDC_INVALID_CALL;
         }
+
+        // Only 16-bit PCM packing is implemented, and frames must be complete
+        if (waveFormat.data.nBitsPerSample != 16 || numData % waveFormat.data.nChannels != 0) {
+            return DDC_INVALID_CALL;
+        }
         
         int extraBytes = numData * 2;
         pcmData.ckSize += extraBytes;
@@ -293,7 +301,7 @@ public class WaveFile extends RiffFile {
             return DDC_INVALID_CALL;
         }
         
-        if (waveFormat.data.nBitsPerSample != 8) {
+        if (waveFormat.data.nBitsPerSample != 8 || numData % waveFormat.data.nChannels != 0) {
             return DDC_INVALID_CALL;
         }
         

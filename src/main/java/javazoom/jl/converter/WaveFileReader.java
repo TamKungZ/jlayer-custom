@@ -39,6 +39,9 @@ import java.util.Objects;
  */
 public class WaveFileReader implements Closeable {
 
+    /** Upper bound on a plausible fmt chunk, to avoid huge allocations. */
+    private static final int MAX_FMT_CHUNK_SIZE = 64 * 1024;
+
     private InputStream in;
     private int sampleRate;
     private short bitsPerSample;
@@ -100,10 +103,27 @@ public class WaveFileReader implements Closeable {
      */
     public void open(InputStream input, long totalLength) throws IOException {
         Objects.requireNonNull(input, "Input stream cannot be null");
+        closeQuietly();
         this.in = input;
         this.totalLength = totalLength;
         this.isSeekable = false;
-        parseHeader();
+        try {
+            parseHeader();
+        } catch (IOException | RuntimeException e) {
+            closeQuietly();
+            throw e;
+        }
+    }
+
+    private void closeQuietly() {
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException ignored) {
+                // nothing useful to do
+            }
+            in = null;
+        }
     }
 
     private void parseHeader() throws IOException {
@@ -128,16 +148,16 @@ public class WaveFileReader implements Closeable {
             byte[] hdr = new byte[8];
             readFully(hdr, 0, 8);
             String id = new String(hdr, 0, 4, "US-ASCII");
-            int chunkSize = leInt(hdr, 4);
+            long chunkSize = leInt(hdr, 4) & 0xFFFFFFFFL;
 
             switch (id) {
                 case "fmt " -> {
-                    if (chunkSize < 16) {
+                    if (chunkSize < 16 || chunkSize > MAX_FMT_CHUNK_SIZE) {
                         throw new IOException("Invalid fmt chunk size: " + chunkSize);
                     }
                     
-                    byte[] fmt = new byte[chunkSize];
-                    readFully(fmt, 0, chunkSize);
+                    byte[] fmt = new byte[(int) chunkSize];
+                    readFully(fmt, 0, (int) chunkSize);
                     
                     int audioFormat = (fmt[0] & 0xFF) | ((fmt[1] & 0xFF) << 8);
                     if (audioFormat != 1) {
@@ -167,6 +187,10 @@ public class WaveFileReader implements Closeable {
                     }
                 }
                 case "data" -> {
+                    if (totalLength > 0 && chunkSize > totalLength) {
+                        throw new IOException("Data chunk size " + chunkSize
+                                + " exceeds file length " + totalLength);
+                    }
                     dataSize = chunkSize;
                     bytesReadFromData = 0;
                     dataFound = true;
@@ -243,19 +267,18 @@ public class WaveFileReader implements Closeable {
         if (offset < 0 || samplesPerChannel < 0) {
             throw new IllegalArgumentException("Invalid offset or sample count");
         }
-        if (offset + samplesPerChannel * numChannels > buffer.length) {
+        if ((long) offset + (long) samplesPerChannel * numChannels > buffer.length) {
             throw new IllegalArgumentException("Buffer too small");
         }
         
         int bytesPerSample = bitsPerSample / 8;
         int frameBytes = bytesPerSample * numChannels;
-        int bytesToRead = samplesPerChannel * frameBytes;
+        // Bounded by buffer.length * bytesPerSample, so it fits in an int
+        long requestedBytes = (long) samplesPerChannel * frameBytes;
         
         // Don't read past data chunk
         long remainingBytes = dataSize - bytesReadFromData;
-        if (bytesToRead > remainingBytes) {
-            bytesToRead = (int) remainingBytes;
-        }
+        int bytesToRead = (int) Math.min(requestedBytes, remainingBytes);
         
         if (bytesToRead <= 0) {
             return 0; // EOF
