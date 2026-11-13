@@ -1,4 +1,4 @@
-package javazoom.jl.modern;
+package me.tamkungz.jlayer.modern;
 
 /**
  * Unchecked exception thrown by {@link Mp3Player}.

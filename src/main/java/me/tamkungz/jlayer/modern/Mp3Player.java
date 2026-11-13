@@ -1,4 +1,4 @@
-package javazoom.jl.modern;
+package me.tamkungz.jlayer.modern;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,4 +1,4 @@
-package javazoom.jl.modern.advanced;
+package me.tamkungz.jlayer.modern.advanced;
 
 /**
  * Unchecked exception thrown by {@link AdvancedPlayer}.

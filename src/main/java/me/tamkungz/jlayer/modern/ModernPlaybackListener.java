@@ -1,6 +1,6 @@
-package javazoom.jl.modern;
+package me.tamkungz.jlayer.modern;
 
-import javazoom.jl.modern.advanced.AdvancedPlayer;
+import me.tamkungz.jlayer.modern.advanced.AdvancedPlayer;
 import javazoom.jl.player.advanced.PlaybackEvent;
 import javazoom.jl.player.advanced.PlaybackListener;
 

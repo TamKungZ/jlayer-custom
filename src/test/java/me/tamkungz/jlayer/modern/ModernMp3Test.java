@@ -2,10 +2,10 @@
  * Modern JLayer API Test Suite
  * Tests Mp3Decoder, Mp3Player, and AdvancedPlayer
  *
- * Location: src/test/java/javazoom/jl/modern/ModernMp3Test.java
+ * Location: src/test/java/me/tamkungz/jlayer/modern/ModernMp3Test.java
  */
 
-package javazoom.jl.modern;
+package me.tamkungz.jlayer.modern;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +44,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.Timeout;
 
 import javazoom.jl.decoder.OutputChannels;
-import javazoom.jl.modern.advanced.AdvancedPlayer;
+import me.tamkungz.jlayer.modern.advanced.AdvancedPlayer;
 import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.NullAudioDevice;

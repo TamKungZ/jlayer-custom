@@ -1,4 +1,4 @@
-package javazoom.jl.modern;
+package me.tamkungz.jlayer.modern;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;

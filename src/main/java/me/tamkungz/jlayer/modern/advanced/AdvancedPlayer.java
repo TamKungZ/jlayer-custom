@@ -1,4 +1,4 @@
-package javazoom.jl.modern.advanced;
+package me.tamkungz.jlayer.modern.advanced;
 
 import java.io.BufferedInputStream;
 import java.io.FilterInputStream;
@@ -14,8 +14,8 @@ import java.util.concurrent.ForkJoinPool;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.modern.ModernPlaybackListener;
-import javazoom.jl.modern.Mp3Info;
+import me.tamkungz.jlayer.modern.ModernPlaybackListener;
+import me.tamkungz.jlayer.modern.Mp3Info;
 import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.advanced.PlaybackEvent;
@@ -177,7 +177,7 @@ public final class AdvancedPlayer implements AutoCloseable {
 
         public AdvancedPlayer build() throws IOException {
             try {
-                return new javazoom.jl.modern.advanced.AdvancedPlayer(this);
+                return new me.tamkungz.jlayer.modern.advanced.AdvancedPlayer(this);
             } catch (JavaLayerException e) {
                 throw new IOException("Failed to create player", e);
             }

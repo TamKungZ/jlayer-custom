@@ -1,4 +1,4 @@
-package javazoom.jl.modern;
+package me.tamkungz.jlayer.modern;
 
 import javazoom.jl.decoder.Header;
 import javazoom.jl.decoder.SampleBuffer;
