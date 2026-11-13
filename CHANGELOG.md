@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking**: moved the modern API from `javazoom.jl.modern` to `me.tamkungz.jlayer.modern` (including `.advanced`). Update imports when upgrading from 1.1.x. The original `javazoom.jl.decoder`, `converter` and `player` packages are unchanged.
 - Updated README install coordinates to `me.tamkungz:jlayer-custom` and the current version, and removed a leftover merge conflict marker.
 - Updated JUnit and Maven plugin versions, and added Java 25 to the CI matrix.
+- Hardened GitHub Actions workflows (least-privilege permissions, pinned action SHAs, timeouts, concurrency).
+- Replaced the `publish.yml` workflow with `release.yml`: pushing a `vX.Y.Z` tag builds the project and deploys the signed artifacts to Maven Central, and publishes a GitHub release with the matching CHANGELOG section as release notes. Release tags now use the `v` prefix.
 - Refreshed `docs/API.md` to match the current API.
 
 ## [1.1.3] - 2026-02-24
