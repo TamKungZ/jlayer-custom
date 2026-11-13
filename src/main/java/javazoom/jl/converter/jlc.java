@@ -34,7 +34,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javazoom.jl.decoder.JavaLayerException;
@@ -63,12 +67,15 @@ public class jlc {
     private static final String VERSION = "1.0.1";
 
     static public void main(String[] args) {
-        System.out.println("JavaLayer Converter v" + VERSION);
-        System.out.println();
-        
         jlcArgs ma = new jlcArgs();
         if (!ma.processArgs(args)) {
-            System.exit(1);
+            System.exit(ma.helpRequested ? 0 : 1);
+        }
+
+        boolean quiet = ma.quiet;
+        if (!quiet) {
+            System.out.println("JavaLayer Converter v" + VERSION);
+            System.out.println();
         }
 
         Converter conv = new Converter();
@@ -81,60 +88,97 @@ public class jlc {
         try {
             if (ma.batchMode) {
                 // Batch conversion
-                System.out.println("Batch conversion mode");
-                System.out.println("Input files: " + ma.inputFiles.size());
-                if (ma.outputDirectory != null) {
-                    System.out.println("Output directory: " + ma.outputDirectory);
+                if (!quiet) {
+                    System.out.println("Batch conversion mode");
+                    System.out.println("Input files: " + ma.inputFiles.size());
+                    if (ma.outputDirectory != null) {
+                        System.out.println("Output directory: " + ma.outputDirectory);
+                    }
+                    System.out.println();
                 }
-                System.out.println();
-                
+
                 int success = 0;
                 int failed = 0;
-                
+                Set<Path> plannedOutputs = new HashSet<>();
+
                 for (String inputFile : ma.inputFiles) {
                     String outputFile;
                     if (ma.outputDirectory != null) {
-                        Path inputPath = Paths.get(inputFile);
-                        String filename = inputPath.getFileName().toString();
-                        String baseName = filename.substring(0, filename.lastIndexOf('.'));
-                        outputFile = Paths.get(ma.outputDirectory, baseName + ".wav").toString();
+                        // Keep the path relative to the scanned root so inputs from
+                        // different subdirectories do not collide
+                        Path relative = ma.relativePaths.get(inputFile);
+                        if (relative == null) {
+                            relative = Paths.get(inputFile).getFileName();
+                        }
+                        outputFile = generateOutputName(
+                            Paths.get(ma.outputDirectory).resolve(relative).toString());
                     } else {
                         outputFile = generateOutputName(inputFile);
                     }
-                    
-                    // Check overwrite
-                    if (!ma.overwrite && Files.exists(Paths.get(outputFile))) {
-                        System.out.println("SKIP: " + inputFile + " (output exists)");
+
+                    if (!plannedOutputs.add(Paths.get(outputFile).toAbsolutePath().normalize())) {
+                        System.err.println("FAILED: " + inputFile + " (output " + outputFile
+                            + " would overwrite another input result)");
+                        failed++;
+                        if (!ma.continueOnError) {
+                            break;
+                        }
                         continue;
                     }
-                    
-                    System.out.print("Converting: " + inputFile + " ... ");
-                    
+
+                    // Check overwrite
+                    if (!ma.overwrite && Files.exists(Paths.get(outputFile))) {
+                        if (!quiet) {
+                            System.out.println("SKIP: " + inputFile + " (output exists)");
+                        }
+                        continue;
+                    }
+
+                    if (!quiet) {
+                        System.out.print("Converting: " + inputFile + " ... ");
+                    }
+
                     try {
+                        Path parent = Paths.get(outputFile).toAbsolutePath().getParent();
+                        if (parent != null) {
+                            Files.createDirectories(parent);
+                        }
                         long start = System.currentTimeMillis();
                         conv.convert(inputFile, outputFile, listener);
                         long duration = System.currentTimeMillis() - start;
-                        System.out.println("OK (" + duration + "ms)");
+                        if (!quiet) {
+                            System.out.println("OK (" + duration + "ms)");
+                        }
                         success++;
-                    } catch (JavaLayerException ex) {
-                        System.out.println("FAILED: " + ex.getMessage());
+                    } catch (JavaLayerException | java.io.IOException ex) {
+                        if (quiet) {
+                            System.err.println("FAILED: " + inputFile + ": " + ex.getMessage());
+                        } else {
+                            System.out.println("FAILED: " + ex.getMessage());
+                        }
                         failed++;
                         if (!ma.continueOnError) {
                             break;
                         }
                     }
                 }
-                
-                System.out.println();
-                System.out.println("Conversion complete: " + success + " succeeded, " + failed + " failed");
-                
+
+                if (!quiet) {
+                    System.out.println();
+                    System.out.println("Conversion complete: " + success + " succeeded, " + failed + " failed");
+                }
+
+                System.exit(failed > 0 ? 1 : 0);
+
             } else {
                 // Single file conversion
                 conv.convert(ma.filename, ma.outputFilename, listener);
-                System.out.println();
-                System.out.println("Conversion complete!");
+                if (!quiet) {
+                    System.out.println();
+                    System.out.println("Conversion complete!");
+                }
             }
-            
+
             System.exit(0);
             
         } catch (JavaLayerException ex) {
@@ -165,6 +209,10 @@ public class jlc {
         public String filename;
         public boolean verboseMode;
         public int verboseLevel = 3;
+        public boolean quiet = false;
+        public boolean helpRequested = false;
+        /** Output path of each collected input, relative to the root it was found under. */
+        public final Map<String, Path> relativePaths = new HashMap<>();
         
         // Enhanced features
         public boolean batchMode = false;
@@ -200,6 +248,7 @@ public class jlc {
             // Check for help first
             for (String arg : argv) {
                 if (arg.equals("-h") || arg.equals("--help")) {
+                    helpRequested = true;
                     return usage();
                 }
                 if (arg.equals("--version")) {
@@ -208,6 +257,7 @@ public class jlc {
                 }
             }
 
+            List<String> positional = new ArrayList<>();
             int i = 0;
             while (i < argc) {
                 String arg = argv[i];
@@ -224,7 +274,7 @@ public class jlc {
                                 System.err.println("Invalid verbose level. Using default.");
                             }
                         }
-                        if (verboseMode) {
+                        if (verboseMode && !quiet) {
                             System.out.println("Verbose mode activated (level " + verboseLevel + ")");
                         }
                         
@@ -264,30 +314,36 @@ public class jlc {
                         
                     } else if (arg.equals("-q") || arg.equals("--quiet")) {
                         // Quiet mode
+                        quiet = true;
                         verboseMode = false;
                         verboseLevel = 0;
-                        
+                                                
                     } else {
                         System.err.println("ERROR: Unknown option: " + arg);
                         return usage();
                     }
                 } else {
-                    // Input file or directory
-                    if (batchMode) {
-                        // Collect all input files
-                        collectInputFiles(arg);
-                    } else {
-                        if (filename == null) {
-                            filename = arg;
-                        } else {
-                            System.err.println("ERROR: Multiple input files specified without batch mode");
-                            return false;
-                        }
-                    }
+                    // Input file or directory; resolved after all options are known
+                    positional.add(arg);
                 }
                 i++;
             }
-            
+
+            if (quiet) {
+                verboseMode = false;
+            }
+
+            if (batchMode) {
+                for (String path : positional) {
+                    collectInputFiles(path);
+                }
+            } else if (positional.size() > 1) {
+                System.err.println("ERROR: Multiple input files specified without batch mode");
+                return false;
+            } else if (positional.size() == 1) {
+                filename = positional.get(0);
+            }
+
             // Validation
             if (batchMode) {
                 if (inputFiles.isEmpty()) {
@@ -341,22 +397,24 @@ public class jlc {
                 }
             } else if (f.isDirectory()) {
                 // Scan directory
-                scanDirectory(f);
+                scanDirectory(f, f.toPath());
             }
         }
         
         /**
          * Scan directory for MP3 files.
          */
-        private void scanDirectory(File dir) {
+        private void scanDirectory(File dir, Path root) {
             File[] files = dir.listFiles();
             if (files == null) return;
-            
+
             for (File f : files) {
                 if (f.isFile() && f.getName().toLowerCase().endsWith(".mp3")) {
                     inputFiles.add(f.getAbsolutePath());
-                } else if (f.isDirectory() && recursive) {
-                    scanDirectory(f);
+                    relativePaths.put(f.getAbsolutePath(), root.relativize(f.toPath()));
+                } else if (f.isDirectory() && recursive && !Files.isSymbolicLink(f.toPath())) {
+                    // Symbolic links are not followed, so link cycles cannot recurse forever
+                    scanDirectory(f, root);
                 }
             }
         }
